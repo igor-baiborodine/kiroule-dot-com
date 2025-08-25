@@ -2,6 +2,3 @@
 [services]
   [services.googleAnalytics]
     ID = 'G-9TQ78S2L8Y'
-
-# Enable / Disable comments on the articles via Disqus.
-disqusShortname = "kiroule"
