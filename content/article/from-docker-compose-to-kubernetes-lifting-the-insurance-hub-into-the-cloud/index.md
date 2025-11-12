@@ -16,13 +16,19 @@ ambitious strategy for modernizing a Java-based insurance system into a cloud-na
 With the roadmap established, the past two months have focused on transitioning from architectural
 diagrams to hands-on engineering. This article chronicles the execution
 of [Phase 1](https://github.com/igor-baiborodine/insurance-hub/blob/main/docs/system-overview-and-migration-analysis.md#phase-1-foundational-infrastructure--environment-migration-lift-and-shift),
-which involves a foundational "lift and shift." This phase moves the entire legacy application from
-the familiar confines of Docker Compose into a robust, production-like Kubernetes environment. By
-establishing parallel clusters—using Kind for local development and K3s for quality assurance—this
-critical first step, representing the metaphorical "lift," validates the new platform and lays the
-stable groundwork necessary for the upcoming deeper service-by-service "shift" migration.
+which involves a foundational "lift and shift." 
 
 <!--more-->
+
+This phase moves the entire legacy application from the familiar confines of Docker Compose into a
+robust, production-like Kubernetes environment. By establishing parallel clusters—using Kind for
+local development and K3s for quality assurance—this critical first step, representing the
+metaphorical "lift," validates the new platform and lays the stable groundwork necessary for the
+upcoming deeper service-by-service "shift" migration.
+
+{{< toc >}}
+
+### Article Scope
 
 The scope of this article covers the foundational infrastructure "lift" phase of migrating the
 Insurance Hub to Kubernetes, specifically:
@@ -45,15 +51,13 @@ the existing environment within Kubernetes. Targeted Java service modifications 
 deployment are part of the next "shift" phase and will be covered later. This lift ensures minimal
 disruption while validating stable operation on the Kubernetes infrastructure.
 
-{{< toc >}}
-
-### Header 1
-
-Paragraph 3
-
 ### Header 2
 
-Paragraph 4
+Header 2 content
+
+### Header 3
+
+Header 3 content
 
 Continue reading the series ["Insurance Hub: The Way to Go"](/series/insurance-hub-the-way-to-go/):
 {{< series "Insurance Hub: The Way to Go" >}}
