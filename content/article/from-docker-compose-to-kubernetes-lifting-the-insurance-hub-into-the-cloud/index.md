@@ -16,19 +16,13 @@ ambitious strategy for modernizing a Java-based insurance system into a cloud-na
 With the roadmap established, the past two months have focused on transitioning from architectural
 diagrams to hands-on engineering. This article chronicles the execution
 of [Phase 1](https://github.com/igor-baiborodine/insurance-hub/blob/main/docs/system-overview-and-migration-analysis.md#phase-1-foundational-infrastructure--environment-migration-lift-and-shift),
-which involves a foundational "lift and shift." 
+which involves a foundational "lift and shift." This phase moves the entire legacy application from
+the familiar confines of Docker Compose into a robust, production-like Kubernetes environment. By
+establishing parallel clusters—using Kind for local development and K3s for quality assurance—this
+critical first step, representing the metaphorical "lift," validates the new platform and lays the
+stable groundwork necessary for the upcoming deeper service-by-service "shift" migration.
 
 <!--more-->
-
-This phase moves the entire legacy application from the familiar confines of Docker Compose into a
-robust, production-like Kubernetes environment. By establishing parallel clusters—using Kind for
-local development and K3s for quality assurance—this critical first step, representing the
-metaphorical "lift," validates the new platform and lays the stable groundwork necessary for the
-upcoming deeper service-by-service "shift" migration.
-
-{{< toc >}}
-
-### Article Scope
 
 The scope of this article covers the foundational infrastructure "lift" phase of migrating the
 Insurance Hub to Kubernetes, specifically:
@@ -51,13 +45,41 @@ the existing environment within Kubernetes. Targeted Java service modifications 
 deployment are part of the next "shift" phase and will be covered later. This lift ensures minimal
 disruption while validating stable operation on the Kubernetes infrastructure.
 
-### Header 2
+{{< toc >}}
 
-Header 2 content
+### Phase 1 Planning and Scoping
+    * Review and finalize the scope of Phase 1
+    * Create tickets for the planned work in Insurance Hub GitHub Project
+    * Establish a workflow for managing tickets/issues in GitHub/Github Projects
 
-### Header 3
+### Cluster Provisioning: Local Dev (Kind)
 
-Header 3 content
+### Cluster Provisioning: QA (K3s)
+    * Initial commitment to use Microk8s for a production-like environment, but switched to K3s due
+      to issues while creating a cluster.
+    * Automate local dev and QA clusters bootstrapping by implementing make targets.
+    * Cluster addons - installed by default.
+    * Provide more specific implementation details and gotchas.
+
+### Kubernetes Deployment Strategy & Best Practices
+    * Elaborate on the necessary change from Bitnami Helm charts to operator-based deployments.
+    * Elaborate on proper namespace isolation and resource management.
+
+### Deploying Core Observability Tools
+
+### Deploying Infrastructure Components
+
+### Deploying Auxiliary Services
+
+### Leveraging AI Tools During the "Lift" Phase
+    * Practical examples of how AI tools assisted in the infrastructure setup.
+    * Reflections on the benefits and limitations of using JetBrains AI tools.
+    * Cost lessons and recommendations
+
+### Final Polishing & Validation
+    * Refactor k8s structure, resource manifests, and make targets.
+    * "Lift" validation checklist.
+    * Clear next-article teaser
 
 Continue reading the series ["Insurance Hub: The Way to Go"](/series/insurance-hub-the-way-to-go/):
 {{< series "Insurance Hub: The Way to Go" >}}
