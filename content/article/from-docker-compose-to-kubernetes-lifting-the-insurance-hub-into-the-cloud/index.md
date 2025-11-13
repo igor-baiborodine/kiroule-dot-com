@@ -16,7 +16,7 @@ ambitious strategy for modernizing a Java-based insurance system into a cloud-na
 With the roadmap established, the past two months have focused on transitioning from architectural
 diagrams to hands-on engineering. This article chronicles the execution
 of [Phase 1](https://github.com/igor-baiborodine/insurance-hub/blob/main/docs/system-overview-and-migration-analysis.md#phase-1-foundational-infrastructure--environment-migration-lift-and-shift),
-which involves a foundational "lift and shift." 
+which involves a foundational "lift and shift."
 
 <!--more-->
 
@@ -60,7 +60,7 @@ Phase 1.
 
 Once the scope was finalized, the first
 epic [ticket](https://github.com/users/igor-baiborodine/projects/8/views/1?pane=issue&itemId=124052445&issue=igor-baiborodine%7Cinsurance-hub%7C5)
-for Phase 1 was created in the "Insurance Hub—Go Migration" project, followed by more granular
+for Phase 1 was created in the "Insurance Hub - Go Migration" project, followed by more granular
 tickets that were aligned with the scope. To streamline ticket creation, the Junie AI coding agent
 was employed to assist in drafting detailed descriptions based on a standardized template. For
 managing the workflow, all new tickets initially enter the "Backlog" column and must pass through a
@@ -70,8 +70,39 @@ Flux for GitOps—and updating the "Dev Notes" section. This structured approach
 communication, proper preparation, and prioritization, setting a strong foundation for executing the
 lift phase of the migration.
 
-### Provisioning Local Dev (Kind) & QA (K3s) Clusters
+### Provisioning Clusters
 
+Since the Kubernetes cluster forms the foundation and starting point of the entire migration, I
+carefully evaluated available tools and options to find a solution that balances resource efficiency
+with the capability to handle complex networking, storage, and production-like workloads. The goal
+was to host a distributed system consisting of six Java/Go microservices alongside stateful components
+and comprehensive observability tools.
+
+Given my extensive experience using [Kind](https://kind.sigs.k8s.io/)-based Kubernetes clusters for
+local development at my current job, it was an obvious choice to leverage Kind again for the
+Insurance Hub’s local development environment.
+
+For the production-like QA environment, I considered two main options: using a well-known cloud
+provider's managed Kubernetes service or setting up a local, fully compliant (or close to fully
+compliant) Kubernetes environment. I opted for the latter based on several factors: eliminating
+cloud infrastructure costs by utilizing existing hardware that has ample CPU and RAM, gaining
+complete administrative control for deep customization, and acquiring hands-on experience managing a
+production-like cluster, which deepens Kubernetes expertise.
+
+Initially, I chose [MicroK8s](https://microk8s.io/) for the production-like simulation because it
+offers a complete, conformant Kubernetes environment with many built-in addons for common
+functionalities such as DNS, ingress, storage, metrics, and monitoring. However, deploying and
+configuring MicroK8s proved to be resource-intensive and time-consuming.
+
+After additional research and testing, I switched to Rancher's [K3s](https://k3s.io/). While K3s is
+not 100% fully conformant with Kubernetes, it is very close and perfectly suited to simulate a
+production environment locally without excessive resource consumption or complex setup. K3s strikes
+an excellent balance between providing a full-fledged Kubernetes experience and maintaining
+development machine efficiency.
+
+#### Local Dev
+
+#### Production-like QA
     * Initial commitment to use Microk8s for a production-like environment, but switched to K3s due
       to issues while creating a cluster.
     * Automate local dev and QA clusters bootstrapping by implementing make targets.
