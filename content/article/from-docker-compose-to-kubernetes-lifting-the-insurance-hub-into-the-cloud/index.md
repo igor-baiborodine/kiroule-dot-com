@@ -95,12 +95,41 @@ functionalities such as DNS, ingress, storage, metrics, and monitoring. However,
 configuring MicroK8s proved to be resource-intensive and time-consuming.
 
 After additional research and testing, I switched to Rancher's [K3s](https://k3s.io/). While K3s is
-not 100% fully conformant with Kubernetes, it is very close and perfectly suited to simulate a
-production environment locally without excessive resource consumption or complex setup. K3s strikes
+not 100% fully conformant with Kubernetes, it is very close and ideally suited for simulating a
+production environment locally without excessive resource consumption or a complex setup. K3s strikes
 an excellent balance between providing a full-fledged Kubernetes experience and maintaining
 development machine efficiency.
 
+Since [Make](https://www.gnu.org/software/make/) is widely used in Go projects, I chose to leverage
+it extensively for automating and reliably reproducing every step involved in creating clusters and
+deploying both infrastructure and service components. To maintain consistency and readability while
+relying on Makefiles, I added a dedicated style
+guide [section](https://github.com/igor-baiborodine/insurance-hub/blob/main/CONTRIBUTING.md#makefile)
+to the `CONTRIBUTING.md` file, outlining the best practices for using Make within the project. 
+
+In addition, the [Prerequisites](https://github.com/igor-baiborodine/insurance-hub/blob/main/CONTRIBUTING.md#prerequisites)
+section was added to clearly document all required dependencies. This ensures everything is provided
+from the developer’s perspective for smooth development and proper operation of the Insurance Hub
+within a Kubernetes cluster. Before proceeding with creating clusters, all necessary dependencies
+should be installed and configured correctly. To facilitate this process, I created a helper Make
+target named [prereq-k8s-all](https://github.com/igor-baiborodine/insurance-hub/blob/947f3e492e50e7efbcfa15762e6d54613be4ff85/k8s/Makefile#L72)
+that automates it.
+
 #### Local Dev
+
+Setting up a Kind cluster is straightforward and fast, making it ideal for iterative development of
+the Insurance Hub’s six Java/Go microservices and accompanying infrastructure. To make cluster
+operations repeatable and error-free, I created
+several [Make targets](https://github.com/igor-baiborodine/insurance-hub/blob/947f3e492e50e7efbcfa15762e6d54613be4ff85/k8s/bootstrap/Makefile#L24):
+
+- `local-dev-create` - create and start a single-node Kind cluster
+- `local-dev-delete` - stop and remove the cluster and its persistent storage
+- `local-dev-suspend` - stop the cluster without deleting it
+- `local-dev-resume` - start the suspended cluster again
+
+All steps required to create and manage the Kind cluster are documented in
+the ["Local Dev"](https://github.com/igor-baiborodine/insurance-hub/blob/main/k8s/base-cluster-how-tos.md#local-dev)
+section of the "Base Cluster How-To's" guide.
 
 #### Production-like QA
     * Initial commitment to use Microk8s for a production-like environment, but switched to K3s due
