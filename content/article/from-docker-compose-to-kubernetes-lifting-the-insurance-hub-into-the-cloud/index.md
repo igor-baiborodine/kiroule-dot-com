@@ -185,8 +185,24 @@ functional and ready to host workloads that require persistent storage and ingre
 outset. Detailed testing notes can be found in the ticket titled [“Phase 1: [1A] Provision local dev and QA Kubernetes clusters”](https://github.com/users/igor-baiborodine/projects/8/views/1?pane=issue&itemId=124053589&issue=igor-baiborodine%7Cinsurance-hub%7C6).
 
 ### Kubernetes Deployment Strategy & Best Practices
-    * Elaborate on the necessary change from Bitnami Helm charts to operator-based deployments.
-    * Elaborate on proper namespace isolation and resource management.
+
+The recommended deployment approach utilizes Kubernetes Operators in conjunction with Kustomize overlays for all infrastructure components, including PostgreSQL, MongoDB, Kafka, Elasticsearch, and MinIO. Operators manage the lifecycle and configuration of these stateful services, while Kustomize enables modular overlays and environment-specific customization. In contrast, Java and Go microservices are deployed using Kustomize alone, which allows for flexible resource patching and declarative management without the added complexity of operator logic. This model is directly reflected in the project’s directory structure for local development and QA environments, as shown in the images below.
+
+While Helm charts from Bitnami were initially considered for stateful workloads, the discontinuation of free chart support by Bitnami led to a transition toward Operators for service management. Operators offer distinct advantages over traditional Helm approaches:
+They automate day-2 operations beyond initial deployment—such as backups, automated failover, upgrades, and scaling—using Custom Resource Definitions (CRDs) that are fully declarative.
+Operators integrate tightly with Kubernetes events and status management, allowing real-time reconciliation and sophisticated self-healing, which is critical for stateful systems.
+Kustomize complements Operators by enabling environment-specific overlays, resource customization, and modular manifest management without custom templating logic, making infrastructure code easier to reason about, review, and modify.
+All stateful infrastructure directories (for example, infra/minio, infra/postgres) contain both Operator-specific manifest files and Kustomize overlays to handle different environments and patches.
+
+Namespace isolation is enforced in QA to simulate production-grade multi-tenancy and security boundaries. By separating resources into functional namespaces for services (qa-svc), data (qa-data), authentication (qa-auth), networking (qa-networking), and monitoring (qa-monitoring), it becomes possible to limit blast radius, simplify access permissions, and streamline troubleshooting. This level of separation is not used for local development, where resources reside in a flat local-dev-all namespace for speed and simplicity.
+
+<-table goes here->
+
+In both environments, Operator manifests and Kustomize overlays reside side by side in well-organized directories. For example, base/cluster.yaml and base/kustomization.yaml are located together for each stateful service, allowing both declarative deployment and environment-specific customization. Patches for resource adjustments, monitoring endpoints, or multi-tenant configurations are managed through Kustomize overlays, ensuring repeatable and reliable deployments across local and QA clusters, as shown below.
+
+<-images go here->
+
+This hybrid deployment strategy achieves several key objectives: automating infrastructure management, simplifying resource customization, enhancing production-like isolation, and facilitating seamless upgrades and scaling as environments evolve.
 
 ### Deploying Core Observability Tools
 
