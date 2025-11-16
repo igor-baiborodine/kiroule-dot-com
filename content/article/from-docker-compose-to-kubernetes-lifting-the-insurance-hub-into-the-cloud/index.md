@@ -132,11 +132,57 @@ the ["Local Dev"](https://github.com/igor-baiborodine/insurance-hub/blob/main/k8
 section of the "Base Cluster How-To's" guide.
 
 #### Production-like QA
-    * Initial commitment to use Microk8s for a production-like environment, but switched to K3s due
-      to issues while creating a cluster.
-    * Automate local dev and QA clusters bootstrapping by implementing make targets.
-    * Cluster addons - installed by default.
-    * Provide more specific implementation details and gotchas.
+
+To make the QA environment closely reflect a production setup, I used LXD-based virtual machines as
+cluster nodes instead of Docker containers. Canonical's [LXD](https://canonical.com/lxd) provides
+stronger isolation and better compatibility with production-like environments while remaining
+lightweight enough for local development.
+
+My development machine is equipped with 24 logical CPUs (16 physical cores) and 64 GB of RAM. Since
+the Kubernetes control plane components—such as the API server, scheduler, controller manager, and
+etcd—are resource-intensive, I allocated more CPU and memory to the master node. The resources were
+distributed as follows, dedicating half of the available machine’s resources to the future cluster:
+
+- Master LXD VM: 6 CPU, 16 GiB RAM
+- Worker LXD VM 1: 3 CPU, 8 GiB RAM
+- Worker LXD VM 2: 3 CPU, 8 GiB RAM
+
+Similar to the local development setup, I implemented a suite
+of [Make targets](https://github.com/igor-baiborodine/insurance-hub/blob/947f3e492e50e7efbcfa15762e6d54613be4ff85/k8s/bootstrap/Makefile#L65)
+to ensure consistent and reliable management of QA cluster operations:
+
+- `qa-nodes-create` – create three LXD VMs (one master, two workers)
+- `qa-nodes-suspend` – pause all QA VMs
+- `qa-nodes-resume` – resume suspended VMs
+- `qa-nodes-snapshot` – create snapshots for backup or rollback
+- `qa-nodes-snapshots-list` – list existing snapshots
+- `qa-nodes-restore` – restore VMs from a snapshot
+- `qa-nodes-delete` – delete all QA VMs and snapshots
+
+These targets wrap underlying `lxc` commands and scripts to automate the lifecycle of QA cluster
+nodes. Because provisioning and deploying QA environments can be time-consuming, the
+`qa-nodes-snapshot` target is particularly valuable for quick backups, rollbacks, and recovery.
+
+Before deploying the K3s cluster on these VMs, the host system’s firewall and network routing must
+be properly configured. Kubernetes networking depends on the host’s ability to forward packets
+between interfaces for pod-to-pod and external communication. Many Linux distributions default to
+dropping forwarded packets, which blocks this traffic. Setting the `iptables` `FORWARD` chain policy
+to `ACCEPT` resolves this issue. Detailed instructions are provided in
+the [“Prerequisites”](https://github.com/igor-baiborodine/insurance-hub/blob/main/k8s/base-cluster-how-tos.md#prerequisite)
+section of the “Base Cluster How-To’s” guide.
+
+Following the creation of VMs, the K3s-based cluster can be deployed with the `qa-cluster-create` and
+`qa-cluster-pull-kubeconfig` [Make targets](https://github.com/igor-baiborodine/insurance-hub/blob/947f3e492e50e7efbcfa15762e6d54613be4ff85/k8s/bootstrap/Makefile#L50).
+The cluster includes essential addons such as DNS, ingress, and storage by default. The second
+target updates the `kubeconfig` file with the master’s IP address, adjusts context names for
+clarity, and merges the configuration into the host’s default `kubeconfig`, enabling direct local
+access to the QA cluster.
+
+All steps required to create and manage the QA cluster are described in
+the [“QA”](https://github.com/igor-baiborodine/insurance-hub/blob/main/k8s/base-cluster-how-tos.md#qa)
+section of the “Base Cluster How-To’s” guide. The cluster has been tested to ensure it’s fully
+functional and ready to host workloads that require persistent storage and ingress routing from the
+outset. Detailed testing notes can be found in the ticket titled [“Phase 1: [1A] Provision local dev and QA Kubernetes clusters”](https://github.com/users/igor-baiborodine/projects/8/views/1?pane=issue&itemId=124053589&issue=igor-baiborodine%7Cinsurance-hub%7C6).
 
 ### Kubernetes Deployment Strategy & Best Practices
     * Elaborate on the necessary change from Bitnami Helm charts to operator-based deployments.
