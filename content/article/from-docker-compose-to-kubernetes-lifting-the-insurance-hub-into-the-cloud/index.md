@@ -122,10 +122,10 @@ the Insurance Hub’s six Java/Go microservices and accompanying infrastructure.
 operations repeatable and error-free, I created
 several [Make targets](https://github.com/igor-baiborodine/insurance-hub/blob/947f3e492e50e7efbcfa15762e6d54613be4ff85/k8s/bootstrap/Makefile#L24):
 
-- `local-dev-create` - create and start a single-node Kind cluster
-- `local-dev-delete` - stop and remove the cluster and its persistent storage
-- `local-dev-suspend` - stop the cluster without deleting it
-- `local-dev-resume` - start the suspended cluster again
+- `local-dev-create` - creates and starts a single-node Kind cluster
+- `local-dev-delete` - stops and removes the cluster and its persistent storage
+- `local-dev-suspend` - stops the cluster without deleting it
+- `local-dev-resume` - starts the suspended cluster again
 
 All steps required to create and manage the Kind cluster are documented in
 the ["Local Dev"](https://github.com/igor-baiborodine/insurance-hub/blob/main/k8s/base-cluster-how-tos.md#local-dev)
@@ -151,13 +151,13 @@ Similar to the local development setup, I implemented a suite
 of [Make targets](https://github.com/igor-baiborodine/insurance-hub/blob/947f3e492e50e7efbcfa15762e6d54613be4ff85/k8s/bootstrap/Makefile#L65)
 to ensure consistent and reliable management of QA cluster operations:
 
-- `qa-nodes-create` – create three LXD VMs (one master, two workers)
-- `qa-nodes-suspend` – pause all QA VMs
-- `qa-nodes-resume` – resume suspended VMs
-- `qa-nodes-snapshot` – create snapshots for backup or rollback
-- `qa-nodes-snapshots-list` – list existing snapshots
-- `qa-nodes-restore` – restore VMs from a snapshot
-- `qa-nodes-delete` – delete all QA VMs and snapshots
+- `qa-nodes-create` – creates three LXD VMs (one master, two workers)
+- `qa-nodes-suspend` – pauses all QA VMs
+- `qa-nodes-resume` – resumes suspended VMs
+- `qa-nodes-snapshot` – creates snapshots for backup or rollback
+- `qa-nodes-snapshots-list` – lists existing snapshots
+- `qa-nodes-restore` – restores VMs from a snapshot
+- `qa-nodes-delete` – deletes all QA VMs and snapshots
 
 These targets wrap underlying `lxc` commands and scripts to automate the lifecycle of QA cluster
 nodes. Because provisioning and deploying QA environments can be time-consuming, the
@@ -244,8 +244,108 @@ This hybrid deployment strategy achieves several key objectives: automating infr
 management, simplifying resource customization, enhancing production-like isolation, and
 facilitating seamless upgrades and scaling as environments evolve.
 
-
 ### Deploying Core Observability Tools
+
+Observability is fundamental for maintaining, troubleshooting, and optimizing modern distributed
+systems. In the QA cluster, a robust observability stack provides essential visibility into service
+health, resource usage, and application performance. The stack deployed here includes Prometheus for
+monitoring, Grafana for visualization, and Alertmanager for notifications, all managed as a unified
+bundle via the Kube Prometheus Stack Helm chart.
+
+To automate provisioning and management, a dedicated suite of [Makefile targets](https://github.com/igor-baiborodine/insurance-hub/blob/947f3e492e50e7efbcfa15762e6d54613be4ff85/k8s/Makefile#L178) 
+that supports every stage of the monitoring lifecycle in the QA environment:
+
+- `prometheus-stack-install` – installs the Kube Prometheus Stack in the `qa-monitoring` namespace
+  using Helm, applying a specific chart version and tailored settings from a `values.yaml` file which is available below
+- `prometheus-stack-uninstall` – cleanly removes the entire monitoring stack from the cluster
+- `prometheus-stack-status` – displays current status for all key parts of the observability stack
+- `prometheus-ui` – provides local access to the Prometheus web UI via port-forwarding
+- `grafana-ui` – provides local access to the Grafana UI via port-forwarding
+
+<details>
+  <summary>k8s/env/qa/infra/prometheus/values.yaml</summary>
+
+```yaml
+enabled: true
+
+kubeControllerManager:
+  enabled: false
+
+nodeExporter:
+  enabled: true
+
+kubeStateMetrics:
+  enabled: true
+
+defaultRules:
+  create: true
+  rules:
+    alertmanager: true
+    etcd: false
+    configReloaders: false
+    general: true
+    k8s: true
+    kubeApiserver: true
+    kubeApiserverAvailability: false
+    kubeApiserverSlos: false
+    kubelet: true
+    kubeProxy: false
+    kubePrometheusGeneral: true
+    kubePrometheusNodeRecording: true
+    kubernetesApps: true
+    kubernetesResources: true
+    kubernetesStorage: true
+    kubernetesSystem: true
+    kubeScheduler: false
+    kubeStateMetrics: true
+    network: true
+    node: true
+    nodeExporterAlerting: true
+    nodeExporterRecording: true
+    prometheus: true
+    prometheusOperator: true
+
+prometheus:
+  prometheusSpec:
+    serviceMonitorNamespaceSelector: {}
+    serviceMonitorSelector:
+      matchLabels: {}
+    podMonitorNamespaceSelector: {}
+    podMonitorSelector:
+      matchLabels: {}
+
+grafana:
+  enabled: true
+  adminPassword: adminpwd
+  defaultDashboardsEnabled: true
+  sidecar:
+    dashboards:
+      enabled: true
+  resources:
+    requests:
+      cpu: 200m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+alertmanager:
+  enabled: true
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 250m
+      memory: 256Mi
+```
+</details>
+&nbsp;
+
+Each target is designed for reliability, repeatability, and ease of use, making routine operations
+and troubleshooting more efficient. Comprehensive instructions for setting up and managing the
+observability stack can be found in the ["Prometheus & Grafana"](https://github.com/igor-baiborodine/insurance-hub/blob/main/k8s/cluster-apps-how-tos.md#prometheus--grafana) 
+section of the "Cluster Apps How-To's" guide.
 
 ### Deploying Infrastructure Components
 
