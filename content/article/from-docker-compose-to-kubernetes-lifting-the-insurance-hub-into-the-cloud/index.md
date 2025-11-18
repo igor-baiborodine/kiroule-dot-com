@@ -246,6 +246,8 @@ facilitating seamless upgrades and scaling as environments evolve.
 
 ### Deploying Core Observability Tools
 
+#### Prometheus & Grafana
+
 Observability is fundamental for maintaining, troubleshooting, and optimizing modern distributed
 systems. In the QA cluster, a robust observability stack provides essential visibility into service
 health, resource usage, and application performance. The stack deployed here includes Prometheus for
@@ -266,6 +268,10 @@ Each target is designed for reliability, repeatability, and ease of use, making 
 and troubleshooting more efficient. Comprehensive instructions for setting up and managing the
 observability stack can be found in the ["Prometheus & Grafana"](https://github.com/igor-baiborodine/insurance-hub/blob/main/k8s/cluster-apps-how-tos.md#prometheus--grafana) 
 section of the "Cluster Apps How-To's" guide.
+
+#### Zipkin
+
+TODO
 
 ### Deploying Infrastructure Components
 
@@ -311,6 +317,34 @@ documented in ["Verify PostgreSQL Connectivity"](https://github.com/igor-baiboro
 ensuring each database cluster is both accessible and production-ready.
 
 #### MongoDB
+
+MongoDB was deployed using
+the [MongoDB Community Operator](https://github.com/mongodb/mongodb-kubernetes-operator) to serve as
+a temporary legacy database during migration to Go microservices. This setup is intentionally
+minimal, featuring no monitoring, high availability, or replica sets, and only a single standalone
+instance—reflecting the project's short lifespan of MongoDB. Resource requests are kept low, with
+each instance attached to a single PersistentVolumeClaim. There is no need to configure secrets for
+custom users, or complex parameters for either QA or local development.
+
+A dedicated suite
+of [Makefile targets](https://github.com/igor-baiborodine/insurance-hub/blob/947f3e492e50e7efbcfa15762e6d54613be4ff85/k8s/Makefile#L550)
+manages every step of the MongoDB deployment process:
+- `mongodb-operator-install` – installs the MongoDB Community operator in the target namespace
+- `mongodb-operator-uninstall` – uninstalls the operator and cleans up its resources
+- `mongodb-root-user-secret-create` – creates or updates the root user credentials secret
+- `mongodb-deploy` – deploys a single MongoDBCommunity resource from the manifest with minimal settings
+- `mongodb-status` – shows current status of MongoDB pods, services, PVCs, and StatefulSets
+- `mongodb-delete` – removes the MongoDBCommunity instance, leaving PVCs and secrets in place
+- `mongodb-purge` – completely purges MongoDB clusters, related PVCs, and associated secrets
+
+These targets make routine operations simple, consistent, and repeatable. Comprehensive instructions
+for deploying and managing MongoDB clusters are available in
+the ["Data/MongoDB"](https://github.com/igor-baiborodine/insurance-hub/blob/main/k8s/cluster-apps-how-tos.md#mongodb)
+section of the "Cluster Apps How-To’s" guide. Cluster connectivity is confirmed by port-forwarding
+in the local development environment and by connecting from a test pod in a different namespace for
+QA. Troubleshooting steps and validation advice are provided in
+the ["Verify MongoDB Connectivity"](https://github.com/igor-baiborodine/insurance-hub/blob/main/k8s/tests/infra/verify-mongodb-connectivity.md)
+guide, ensuring each deployment is accessible and ready to serve its transitional purpose.
 
 #### Kafka
 
