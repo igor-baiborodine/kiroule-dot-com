@@ -256,91 +256,11 @@ To automate provisioning and management, a dedicated suite of [Makefile targets]
 that supports every stage of the monitoring lifecycle in the QA environment:
 
 - `prometheus-stack-install` – installs the Kube Prometheus Stack in the `qa-monitoring` namespace
-  using Helm, applying a specific chart version and tailored settings from a `values.yaml` file which is available below
+  using Helm, applying a specific chart version and tailored settings from the [values.yaml](https://github.com/igor-baiborodine/insurance-hub/blob/main/k8s/env/qa/infra/prometheus/values.yaml)
 - `prometheus-stack-uninstall` – cleanly removes the entire monitoring stack from the cluster
 - `prometheus-stack-status` – displays current status for all key parts of the observability stack
 - `prometheus-ui` – provides local access to the Prometheus web UI via port-forwarding
 - `grafana-ui` – provides local access to the Grafana UI via port-forwarding
-
-<details>
-  <summary>k8s/env/qa/infra/prometheus/values.yaml</summary>
-
-```yaml
-enabled: true
-
-kubeControllerManager:
-  enabled: false
-
-nodeExporter:
-  enabled: true
-
-kubeStateMetrics:
-  enabled: true
-
-defaultRules:
-  create: true
-  rules:
-    alertmanager: true
-    etcd: false
-    configReloaders: false
-    general: true
-    k8s: true
-    kubeApiserver: true
-    kubeApiserverAvailability: false
-    kubeApiserverSlos: false
-    kubelet: true
-    kubeProxy: false
-    kubePrometheusGeneral: true
-    kubePrometheusNodeRecording: true
-    kubernetesApps: true
-    kubernetesResources: true
-    kubernetesStorage: true
-    kubernetesSystem: true
-    kubeScheduler: false
-    kubeStateMetrics: true
-    network: true
-    node: true
-    nodeExporterAlerting: true
-    nodeExporterRecording: true
-    prometheus: true
-    prometheusOperator: true
-
-prometheus:
-  prometheusSpec:
-    serviceMonitorNamespaceSelector: {}
-    serviceMonitorSelector:
-      matchLabels: {}
-    podMonitorNamespaceSelector: {}
-    podMonitorSelector:
-      matchLabels: {}
-
-grafana:
-  enabled: true
-  adminPassword: adminpwd
-  defaultDashboardsEnabled: true
-  sidecar:
-    dashboards:
-      enabled: true
-  resources:
-    requests:
-      cpu: 200m
-      memory: 256Mi
-    limits:
-      cpu: 500m
-      memory: 512Mi
-
-alertmanager:
-  enabled: true
-  resources:
-    requests:
-      cpu: 100m
-      memory: 128Mi
-    limits:
-      cpu: 250m
-      memory: 256Mi
-```
-</details>
-&nbsp;
 
 Each target is designed for reliability, repeatability, and ease of use, making routine operations
 and troubleshooting more efficient. Comprehensive instructions for setting up and managing the
@@ -348,6 +268,55 @@ observability stack can be found in the ["Prometheus & Grafana"](https://github.
 section of the "Cluster Apps How-To's" guide.
 
 ### Deploying Infrastructure Components
+
+#### PostgreSQL
+
+A reliable and maintainable PostgreSQL deployment is essential for supporting stateful microservices
+across both QA and local environments. The initial setup used Bitnami’s Helm chart to provision a
+shared PostgreSQL cluster for all Java microservices. After Bitnami discontinued free support, the
+deployment strategy was updated to use [CloudNativePG](https://cloudnative-pg.io/)—a
+Kubernetes-native operator designed for production-grade PostgreSQL management.
+
+To align with best practices described in resources such as ["Maximizing Microservice Databases with
+Kubernetes, Postgres, and CloudNativePG"](https://www.gabrielebartolini.it/articles/2024/02/maximizing-microservice-databases-with-kubernetes-postgres-and-cloudnativepg/)
+and the ["CNCF Data on Kubernetes Whitepaper"](https://github.com/cncf/tag-storage/blob/master/data-on-kubernetes-whitepaper/data-on-kubernetes-whitepaper-databases.md),
+the updated setup provisions a dedicated PostgreSQL cluster for each Java microservice (payment,
+policy, product, auth, and document), totaling five clusters per environment. This approach isolates
+workloads, simplifies scaling, and matches modern microservice architecture patterns. All
+configuration is managed through environment-specific Kustomize overlays, which streamline
+operations and enable easy adjustments when needed.
+
+A set of [Makefile targets](https://github.com/igor-baiborodine/insurance-hub/blob/947f3e492e50e7efbcfa15762e6d54613be4ff85/k8s/Makefile#L231)
+smooths every step of the PostgreSQL deployment lifecycle:
+
+- `postgres-operator-deploy` – deploys the CloudNativePG operator into the `cnpg-system` namespace
+- `postgres-operator-delete` – removes the operator and its resources
+- `postgres-svc-secret-create` – creates or updates the service user credentials secret for each
+  database, ensuring secure access
+- `postgres-svc-deploy` – deploys a PostgreSQL cluster tailored for a specific service
+- `postgres-svc-status` – reports the operational status of deployed clusters
+- `postgres-svc-delete` – deletes a specific PostgreSQL cluster
+- `postgres-svc-purge` – completely removes a cluster and its related secrets
+
+These targets make it easy to provision, update, monitor, or remove Postgres clusters for any
+service. Detailed instructions for deploying and managing PostgreSQL clusters are available in the
+["Data/PostgreSQL"](https://github.com/igor-baiborodine/insurance-hub/blob/main/k8s/cluster-apps-how-tos.md#postgres)
+section of the "Cluster Apps How-To’s" guide. For QA, Prometheus metrics and Grafana dashboards have
+been enabled for each service-specific cluster, giving clear visibility into CPU, memory, storage,
+and network usage.
+
+Connectivity for each cluster is validated using port-forwarding in local development and from test
+pods in alternate namespaces in the QA environment. Results and troubleshooting guides are
+documented in ["Verify PostgreSQL Connectivity"](https://github.com/igor-baiborodine/insurance-hub/blob/main/k8s/tests/infra/verify-postgres-connectivity.md),
+ensuring each database cluster is both accessible and production-ready.
+
+#### MongoDB
+
+#### Kafka
+
+#### Elasticsearch
+
+#### MinIO
 
 ### Deploying Auxiliary Services
 
