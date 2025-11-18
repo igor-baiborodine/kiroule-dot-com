@@ -348,21 +348,38 @@ guide, ensuring each deployment is accessible and ready to serve its transitiona
 
 #### Elasticsearch
 
-Elasticsearch powers the search functionality in the Insurance Hub. For deployment, the official Elastic Cloud on Kubernetes (ECK) operator was used, providing a production-ready foundation that supports high availability, multi-node clustering, and persistent storage as project requirements evolve. The configuration is HA-capable and deploys topologies that can be expanded to multiple nodes if needed, consistent with best practices for scalable search infrastructure.​
+Elasticsearch powers the search functionality in the Insurance Hub. For deployment, the
+official [Elastic Cloud on Kubernetes](https://github.com/elastic/cloud-on-k8s) (ECK) operator was
+used, providing a production-ready foundation that supports high availability, multi-node
+clustering, and persistent storage as project requirements evolve. The configuration is HA-capable
+and deploys topologies that can be expanded to multiple nodes if needed, consistent with best
+practices for scalable search infrastructure.
 
-Monitoring and observability in the QA environment leverage both the Kube Prometheus Stack and the dedicated Prometheus Elasticsearch exporter, which is deployed separately. This exporter makes Elasticsearch metrics available for collection, ensuring visibility into cluster health, performance, and usage patterns.​
+Monitoring and observability in the QA environment leverage both the Kube Prometheus Stack and the
+dedicated [Prometheus Elasticsearch exporter](https://github.com/prometheus-community/elasticsearch_exporter),
+which is deployed separately. This exporter makes Elasticsearch metrics available for collection,
+ensuring visibility into cluster health, performance, and usage patterns.
 
-A suite of Makefile targets enables seamless management of the Elasticsearch deployment lifecycle:
-es-operator-deploy – installs the ECK operator in the elastic-system namespace
-es-operator-delete – removes the ECK operator and its resources
-es-deploy – deploys the Elasticsearch cluster into the target namespace with persistent storage and HA-ready topology
-es-status – displays current cluster status, including pods, PVCs, services, StatefulSets, and custom resources
-es-delete – deletes the Elasticsearch cluster while optionally preserving related resources
-es-purge – entirely removes the cluster, associated secrets, and PVCs, ensuring a clean environment for redeployment
-es-exporter-deploy – deploys the Prometheus Elasticsearch exporter for monitoring metrics
-es-exporter-delete – removes the Elasticsearch exporter deployment.
-These targets ensure that every step, from installation to monitoring and teardown, is consistent and repeatable across both local and QA environments. Deployment and management instructions are provided in the "Data/Elasticsearch" section of the Cluster Apps How-To’s guide. Connectivity validation and troubleshooting steps are described in the "Verify Elasticsearch Connectivity" guide, ensuring the cluster is operational and ready for search workloads.
+A suite of [Makefile targets](https://github.com/igor-baiborodine/insurance-hub/blob/947f3e492e50e7efbcfa15762e6d54613be4ff85/k8s/Makefile#L288)
+enables seamless management of the Elasticsearch deployment lifecycle:
+- `es-operator-deploy` – installs the ECK operator in the `elastic-system` namespace
+- `es-operator-delete` – removes the ECK operator and its resources
+- `es-deploy` – deploys the Elasticsearch cluster into the target namespace with persistent storage
+  and HA-ready topology
+- `es-status` – displays current cluster status, including pods, PVCs, services, StatefulSets, and
+  custom resources
+- `es-delete` – deletes the Elasticsearch cluster while optionally preserving related resources
+- `es-purge` – entirely removes the cluster, associated secrets, and PVCs, ensuring a clean
+  environment for redeployment
+- `es-exporter-deploy` – deploys the Prometheus Elasticsearch exporter for monitoring metrics
+- `es-exporter-delete` – removes the Elasticsearch exporter deployment.
 
+These targets ensure that every step, from installation to monitoring and teardown, is consistent
+and repeatable across both local and QA environments. Deployment and management instructions are
+provided in the ["Data/Elasticsearch"](https://github.com/igor-baiborodine/insurance-hub/blob/main/k8s/cluster-apps-how-tos.md#elasticsearch)
+section of the "Cluster Apps How-To’s" guide. Connectivity validation and troubleshooting steps are
+described in the ["Verify Elasticsearch Connectivity"](https://github.com/igor-baiborodine/insurance-hub/blob/main/k8s/tests/infra/verify-elasticsearch-connectivity.md)
+guide, ensuring the cluster is operational and ready for search workloads.
 
 #### Kafka
 
