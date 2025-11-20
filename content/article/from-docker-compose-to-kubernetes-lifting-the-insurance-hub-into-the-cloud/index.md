@@ -273,13 +273,38 @@ section of the "Cluster Apps How-To's" guide.
 
 #### Zipkin
 
-TODO
+[Zipkin](https://zipkin.io/) provides distributed tracing capabilities in the QA Kubernetes cluster during Phase 1. Since
+Zipkin is set to be replaced by Grafana Tempo in the [next phase](https://github.com/igor-baiborodine/insurance-hub/blob/main/docs/system-overview-and-migration-analysis.md#phase-2-foundational-observability),
+it was deployed using the official [Zipkin Helm](https://github.com/openzipkin/zipkin-helm)
+chart—not an operator—streamlining setup while maintaining required functionality. For efficient
+storage and trace retrieval, Zipkin is configured to use the existing Elasticsearch cluster as its
+backend, with dedicated service accounts created to enforce secure, minimal-privilege access.
+
+A focused set of [Makefile targets](https://github.com/igor-baiborodine/insurance-hub/blob/947f3e492e50e7efbcfa15762e6d54613be4ff85/k8s/Makefile#L659)
+automates Zipkin operations in the QA environment:
+
+- `zipkin-es-user-secret-create` – Creates or updates the secret for Zipkin’s Elasticsearch user
+  credentials.
+- `zipkin-es-user-create` – Automates creation of the Elasticsearch role and user for Zipkin via
+  in-cluster test pods.
+- `zipkin-install` – Installs Zipkin using the Helm chart in the **qa-monitoring** namespace,
+  applies custom values, and turns off unnecessary readiness probes to enable a smoother rollout.
+- `zipkin-uninstall` – Removes Zipkin from the QA cluster completely.
+- `zipkin-status` – Reports current deployment, pod, service, and endpoint status for Zipkin.
+- `zipkin-ui` – Enables local port-forwarding for easy access to the Zipkin web UI.
+
+Clear, incremental instructions for deployment and lifecycle management are provided in the
+["QA-Observability/Zipkin"](https://github.com/igor-baiborodine/insurance-hub/blob/main/k8s/cluster-apps-how-tos.md#zipkin)
+section of the "Cluster Apps How-To’s" manual. For connectivity and operational validation—including
+submitting traces through the HTTP API and verifying them in the Zipkin UI—refer to the
+["Verify Zipkin Deployment and Tracing in QA"](https://github.com/igor-baiborodine/insurance-hub/blob/main/k8s/tests/infra/verify-zipkin-tracing.md)
+guide. This ensures trace functionality is robust and ready for legacy service migration.
 
 ### Deploying Infrastructure Components
 
 #### PostgreSQL
 
-A reliable and maintainable PostgreSQL deployment is essential for supporting stateful microservices
+A reliable and maintainable [PostgreSQL](https://www.postgresql.org/) deployment is essential for supporting stateful microservices
 across both QA and local environments. The initial setup used Bitnami’s Helm chart to provision a
 shared PostgreSQL cluster for all Java microservices. After Bitnami discontinued free support, the
 deployment strategy was updated to use [CloudNativePG](https://cloudnative-pg.io/)—a
@@ -320,16 +345,14 @@ ensuring each database cluster is both accessible and production-ready.
 
 #### MongoDB
 
-MongoDB was deployed using
-the [MongoDB Community Operator](https://github.com/mongodb/mongodb-kubernetes-operator) to serve as
-a temporary legacy database during migration to Go microservices. This setup is intentionally
+[MongoDB](https://www.mongodb.com/) was deployed using the [MongoDB Community Operator](https://github.com/mongodb/mongodb-kubernetes-operator) 
+to serve as a temporary legacy database during migration to Go microservices. This setup is intentionally
 minimal, featuring no monitoring, high availability, or replica sets, and only a single standalone
 instance—reflecting the project's short lifespan of MongoDB. Resource requests are kept low, with
 each instance attached to a single PersistentVolumeClaim. There is no need to configure secrets for
 custom users, or complex parameters for either QA or local development.
 
-A dedicated suite
-of [Makefile targets](https://github.com/igor-baiborodine/insurance-hub/blob/947f3e492e50e7efbcfa15762e6d54613be4ff85/k8s/Makefile#L550)
+A dedicated suite of [Makefile targets](https://github.com/igor-baiborodine/insurance-hub/blob/947f3e492e50e7efbcfa15762e6d54613be4ff85/k8s/Makefile#L550)
 manages every step of the MongoDB deployment process:
 - `mongodb-operator-install` – Installs the MongoDB Community operator in the **qa-data** namespace.
 - `mongodb-operator-uninstall` – Uninstalls the operator and cleans up its resources.
@@ -351,7 +374,7 @@ guide, ensuring each deployment is accessible and ready to serve its transitiona
 
 #### Elasticsearch
 
-Elasticsearch powers the search functionality in the Insurance Hub. For deployment, the
+[Elasticsearch](https://www.elastic.co/elasticsearch) powers the search functionality in the Insurance Hub. For deployment, the
 official [Elastic Cloud on Kubernetes](https://github.com/elastic/cloud-on-k8s) (ECK) operator was
 used, providing a production-ready foundation that supports high availability, multi-node
 clustering, and persistent storage as project requirements evolve. The configuration is HA-capable
@@ -386,7 +409,7 @@ guide, ensuring the cluster is operational and ready for search workloads.
 
 #### Kafka
 
-Kafka plays a central role in enabling event-driven communication between services in the Insurance
+[Kafka](https://kafka.apache.org/) plays a central role in enabling event-driven communication between services in the Insurance
 Hub. For cluster orchestration and lifecycle management, the [Strimzi Kafka Operator](https://github.com/strimzi/strimzi-kafka-operator)
 was selected. Strimzi automates every stage of Kafka deployment, from initial setup through rolling
 upgrades, scaling, monitoring, and teardown, using Kubernetes-native custom resource definitions for
@@ -429,7 +452,7 @@ guide, ensuring that the deployed cluster is ready for robust, production-like m
 
 #### MinIO
 
-MinIO replaces legacy filesystem storage for Java services, providing S3-compatible object storage
+[MinIO](https://www.min.io/) replaces legacy filesystem storage for Java services, providing S3-compatible object storage
 tailored for both local development and production-like QA needs. Deployment uses the official
 [MinIO Kubernetes Operator](https://github.com/minio/operator) in combination with Kustomize
 manifests and overlays for tenant deployments, delivering flexibility and automation across diverse
