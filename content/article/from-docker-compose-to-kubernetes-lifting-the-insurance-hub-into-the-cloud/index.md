@@ -215,11 +215,12 @@ boundaries. By separating resources into functional namespaces for services (`qa
 authentication (`qa-auth`), networking (`qa-networking`), and monitoring (`qa-monitoring`), it
 becomes possible to limit blast radius, simplify access permissions, and streamline troubleshooting.
 
-- `qa-svc` Java/Go microservices, JSReport
-- `qa-data` PostgreSQL, MongoDB, Elasticsearch, Kafka, MinIO, TarantoolDB
-- `qa-auth` KeyCloak
-- `qa-networking` Envoy Proxy
-- `qa-monitoring` Prometheus, Grafana, Loki, Tempo
+- `qa-svc` – Java/Go microservices, JSReport
+- `qa-data` – PostgreSQL, MongoDB, Elasticsearch, Kafka, MinIO, TarantoolDB
+- `qa-auth` – KeyCloak
+- `qa-networking` – Envoy Proxy
+- `qa-monitoring` – Prometheus, Grafana, Loki, Tempo
+- `qa-minio-<tenant-name>` – One MinIO tenant per a dedicated namespace
 
 This level of separation is not used for local development, where resources reside in a flat
 `local-dev-all` namespace for speed and simplicity.
@@ -252,12 +253,12 @@ Observability is fundamental for maintaining, troubleshooting, and optimizing mo
 systems. In the QA cluster, a robust observability stack provides essential visibility into service
 health, resource usage, and application performance. The stack deployed here includes Prometheus for
 monitoring, Grafana for visualization, and Alertmanager for notifications, all managed as a unified
-bundle via the Kube Prometheus Stack Helm chart.
+bundle via the [Kube Prometheus Stack Helm chart](https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack).
 
 To automate provisioning and management, a dedicated suite of [Makefile targets](https://github.com/igor-baiborodine/insurance-hub/blob/947f3e492e50e7efbcfa15762e6d54613be4ff85/k8s/Makefile#L178) 
 that supports every stage of the monitoring lifecycle in the QA environment:
 
-- `prometheus-stack-install` – Installs the Kube Prometheus Stack in the `qa-monitoring` namespace.
+- `prometheus-stack-install` – Installs the Kube Prometheus Stack in the **qa-monitoring** namespace.
   using Helm, applying a specific chart version and tailored settings from
   the [values.yaml](https://github.com/igor-baiborodine/insurance-hub/blob/main/k8s/env/qa/infra/prometheus/values.yaml).
 - `prometheus-stack-uninstall` – Cleanly removes the entire monitoring stack from the cluster.
@@ -296,7 +297,7 @@ operations and enable easy adjustments when needed.
 A set of [Makefile targets](https://github.com/igor-baiborodine/insurance-hub/blob/947f3e492e50e7efbcfa15762e6d54613be4ff85/k8s/Makefile#L231)
 smooths every step of the PostgreSQL deployment lifecycle:
 
-- `postgres-operator-deploy` – Deploys the CloudNativePG operator into the `cnpg-system` namespace.
+- `postgres-operator-deploy` – Deploys the CloudNativePG operator in the **cnpg-system** namespace.
 - `postgres-operator-delete` – Removes the operator and its resources.
 - `postgres-svc-secret-create` – Creates or updates the service user credentials secret for each
   database, ensuring secure access.
@@ -330,7 +331,7 @@ custom users, or complex parameters for either QA or local development.
 A dedicated suite
 of [Makefile targets](https://github.com/igor-baiborodine/insurance-hub/blob/947f3e492e50e7efbcfa15762e6d54613be4ff85/k8s/Makefile#L550)
 manages every step of the MongoDB deployment process:
-- `mongodb-operator-install` – Installs the MongoDB Community operator in the target namespace.
+- `mongodb-operator-install` – Installs the MongoDB Community operator in the **qa-data** namespace.
 - `mongodb-operator-uninstall` – Uninstalls the operator and cleans up its resources.
 - `mongodb-root-user-secret-create` – Creates or updates the root user credentials secret.
 - `mongodb-deploy` – Deploys a single MongoDBCommunity resource from the manifest with minimal
@@ -364,7 +365,7 @@ ensuring visibility into cluster health, performance, and usage patterns.
 
 A suite of [Makefile targets](https://github.com/igor-baiborodine/insurance-hub/blob/947f3e492e50e7efbcfa15762e6d54613be4ff85/k8s/Makefile#L288)
 enables seamless management of the Elasticsearch deployment lifecycle:
-- `es-operator-deploy` – Installs the ECK operator in the `elastic-system` namespace.
+- `es-operator-deploy` – Installs the ECK operator in the **elastic-system** namespace.
 - `es-operator-delete` – Removes the ECK operator and its resources.
 - `es-deploy` – Deploys the Elasticsearch cluster into the target namespace with persistent storage
   and HA-ready topology.
@@ -400,7 +401,7 @@ dashboards, giving clear insight into cluster health and performance.
 A comprehensive suite of [Makefile targets](https://github.com/igor-baiborodine/insurance-hub/blob/947f3e492e50e7efbcfa15762e6d54613be4ff85/k8s/Makefile#L355)
 supports Kafka operations across both local dev and QA clusters:
 
-- `kafka-strimzi-operator-install` – Installs the Strimzi Kafka operator in the kafka-system
+- `kafka-strimzi-operator-install` – Installs the Strimzi Kafka operator in the **kafka-system**
   namespace.
 - `kafka-strimzi-operator-uninstall` – Uninstalls the operator and deletes the kafka-system
   namespace.
@@ -427,6 +428,40 @@ producing and consuming test messages on dedicated topics—can be found in the
 guide, ensuring that the deployed cluster is ready for robust, production-like messaging workloads.
 
 #### MinIO
+
+MinIO replaces legacy filesystem storage for Java services, providing S3-compatible object storage
+tailored for both local development and production-like QA needs. Deployment uses the official
+[MinIO Kubernetes Operator](https://github.com/minio/operator) in combination with Kustomize
+manifests and overlays for tenant deployments, delivering flexibility and automation across diverse
+environments.
+
+Consistent with Kubernetes multi-tenancy best practices, each MinIO Tenant is deployed in its own
+dedicated namespace. This strategy enforces resource isolation, prevents configuration conflicts,
+and cleanly separates object storage workloads. A single-node tenant is used for local development,
+while a three-node high-availability tenant is provisioned for QA, matching requirements for
+durability and scalability.
+
+A [targeted suite](https://github.com/igor-baiborodine/insurance-hub/blob/947f3e492e50e7efbcfa15762e6d54613be4ff85/k8s/Makefile#L457) 
+of Makefile automation supports all stages of MinIO lifecycle management:
+
+- `minio-operator-deploy` - Deploys the MinIO operator in the **minio-operator** namespace.
+- `minio-operator-delete` - Removes the operator and associated resources.
+- `minio-storage-user-secret-create` - Creates or updates user credentials secrets for each tenant
+  namespace.
+- `minio-storage-config-secret-create` - Manages configuration secrets for secure tenant setup.
+- `minio-tenant-deploy` - Deploys a MinIO tenant cluster for a given service within a dedicated
+  namespace, with overlays for local dev and QA topologies.
+- `minio-tenant-status` - Shows operational status, listing pods, services, PVCs, and
+  ServiceMonitors for any tenant.
+- `minio-tenant-delete` - Deletes a selected MinIO tenant cluster along with monitoring resources.
+- `minio-tenant-purge` - Fully deletes a tenant, all related secrets, PVCs, and its namespace.
+
+These automation targets streamline deployments, upgrades, and teardowns, ensuring reliable,
+repeatable operations across all environments. Incremental instructions are available in the 
+"Data/MinIO" section of the "Cluster Apps How-To’s" manual. For validation, connectivity tests, and
+bucket management tasks—such as creating, listing, and deleting buckets using the [mc](https://github.com/minio/mc) 
+MinIO client—are described in the ["Verify MinIO Connectivity"](https://github.com/igor-baiborodine/insurance-hub/blob/main/k8s/tests/infra/verify-minio-connectivity.md) 
+guide, ensuring MinIO tenants are production-ready for object storage operations.
 
 ### Deploying Auxiliary Services
 
