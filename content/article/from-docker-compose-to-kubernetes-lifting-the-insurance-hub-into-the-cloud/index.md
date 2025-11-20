@@ -151,13 +151,13 @@ Similar to the local development setup, I implemented a suite
 of [Make targets](https://github.com/igor-baiborodine/insurance-hub/blob/947f3e492e50e7efbcfa15762e6d54613be4ff85/k8s/bootstrap/Makefile#L65)
 to ensure consistent and reliable management of QA cluster operations:
 
-- `qa-nodes-create` – creates three LXD VMs (one master, two workers)
-- `qa-nodes-suspend` – pauses all QA VMs
-- `qa-nodes-resume` – resumes suspended VMs
-- `qa-nodes-snapshot` – creates snapshots for backup or rollback
-- `qa-nodes-snapshots-list` – lists existing snapshots
-- `qa-nodes-restore` – restores VMs from a snapshot
-- `qa-nodes-delete` – deletes all QA VMs and snapshots
+- `qa-nodes-create` – Creates three LXD VMs (one master, two workers).
+- `qa-nodes-suspend` – Pauses all QA VMs.
+- `qa-nodes-resume` – Resumes suspended VMs.
+- `qa-nodes-snapshot` – Creates snapshots for backup or rollback.
+- `qa-nodes-snapshots-list` – Lists existing snapshots.
+- `qa-nodes-restore` – Restores VMs from a snapshot.
+- `qa-nodes-delete` – Deletes all QA VMs and snapshots.
 
 These targets wrap underlying `lxc` commands and scripts to automate the lifecycle of QA cluster
 nodes. Because provisioning and deploying QA environments can be time-consuming, the
@@ -257,12 +257,13 @@ bundle via the Kube Prometheus Stack Helm chart.
 To automate provisioning and management, a dedicated suite of [Makefile targets](https://github.com/igor-baiborodine/insurance-hub/blob/947f3e492e50e7efbcfa15762e6d54613be4ff85/k8s/Makefile#L178) 
 that supports every stage of the monitoring lifecycle in the QA environment:
 
-- `prometheus-stack-install` – installs the Kube Prometheus Stack in the `qa-monitoring` namespace
-  using Helm, applying a specific chart version and tailored settings from the [values.yaml](https://github.com/igor-baiborodine/insurance-hub/blob/main/k8s/env/qa/infra/prometheus/values.yaml)
-- `prometheus-stack-uninstall` – cleanly removes the entire monitoring stack from the cluster
-- `prometheus-stack-status` – displays current status for all key parts of the observability stack
-- `prometheus-ui` – provides local access to the Prometheus web UI via port-forwarding
-- `grafana-ui` – provides local access to the Grafana UI via port-forwarding
+- `prometheus-stack-install` – Installs the Kube Prometheus Stack in the `qa-monitoring` namespace.
+  using Helm, applying a specific chart version and tailored settings from
+  the [values.yaml](https://github.com/igor-baiborodine/insurance-hub/blob/main/k8s/env/qa/infra/prometheus/values.yaml).
+- `prometheus-stack-uninstall` – Cleanly removes the entire monitoring stack from the cluster.
+- `prometheus-stack-status` – Displays current status for all key parts of the observability stack.
+- `prometheus-ui` – Provides local access to the Prometheus web UI via port-forwarding.
+- `grafana-ui` – Provides local access to the Grafana UI via port-forwarding.
 
 Each target is designed for reliability, repeatability, and ease of use, making routine operations
 and troubleshooting more efficient. Comprehensive instructions for setting up and managing the
@@ -295,14 +296,14 @@ operations and enable easy adjustments when needed.
 A set of [Makefile targets](https://github.com/igor-baiborodine/insurance-hub/blob/947f3e492e50e7efbcfa15762e6d54613be4ff85/k8s/Makefile#L231)
 smooths every step of the PostgreSQL deployment lifecycle:
 
-- `postgres-operator-deploy` – deploys the CloudNativePG operator into the `cnpg-system` namespace
-- `postgres-operator-delete` – removes the operator and its resources
-- `postgres-svc-secret-create` – creates or updates the service user credentials secret for each
-  database, ensuring secure access
-- `postgres-svc-deploy` – deploys a PostgreSQL cluster tailored for a specific service
-- `postgres-svc-status` – reports the operational status of deployed clusters
-- `postgres-svc-delete` – deletes a specific PostgreSQL cluster
-- `postgres-svc-purge` – completely removes a cluster and its related secrets
+- `postgres-operator-deploy` – Deploys the CloudNativePG operator into the `cnpg-system` namespace.
+- `postgres-operator-delete` – Removes the operator and its resources.
+- `postgres-svc-secret-create` – Creates or updates the service user credentials secret for each
+  database, ensuring secure access.
+- `postgres-svc-deploy` – Deploys a PostgreSQL cluster tailored for a specific service.
+- `postgres-svc-status` – Reports the operational status of deployed clusters.
+- `postgres-svc-delete` – Deletes a specific PostgreSQL cluster.
+- `postgres-svc-purge` – Completely removes a cluster and its related secrets.
 
 These targets make it easy to provision, update, monitor, or remove Postgres clusters for any
 service. Detailed instructions for deploying and managing PostgreSQL clusters are available in the
@@ -329,13 +330,14 @@ custom users, or complex parameters for either QA or local development.
 A dedicated suite
 of [Makefile targets](https://github.com/igor-baiborodine/insurance-hub/blob/947f3e492e50e7efbcfa15762e6d54613be4ff85/k8s/Makefile#L550)
 manages every step of the MongoDB deployment process:
-- `mongodb-operator-install` – installs the MongoDB Community operator in the target namespace
-- `mongodb-operator-uninstall` – uninstalls the operator and cleans up its resources
-- `mongodb-root-user-secret-create` – creates or updates the root user credentials secret
-- `mongodb-deploy` – deploys a single MongoDBCommunity resource from the manifest with minimal settings
-- `mongodb-status` – shows current status of MongoDB pods, services, PVCs, and StatefulSets
-- `mongodb-delete` – removes the MongoDBCommunity instance, leaving PVCs and secrets in place
-- `mongodb-purge` – completely purges MongoDB clusters, related PVCs, and associated secrets
+- `mongodb-operator-install` – Installs the MongoDB Community operator in the target namespace.
+- `mongodb-operator-uninstall` – Uninstalls the operator and cleans up its resources.
+- `mongodb-root-user-secret-create` – Creates or updates the root user credentials secret.
+- `mongodb-deploy` – Deploys a single MongoDBCommunity resource from the manifest with minimal
+  settings.
+- `mongodb-status` – Shows current status of MongoDB pods, services, PVCs, and StatefulSets.
+- `mongodb-delete` – Removes the MongoDBCommunity instance, leaving PVCs and secrets in place.
+- `mongodb-purge` – Completely purges MongoDB clusters, related PVCs, and associated secrets.
 
 These targets make routine operations simple, consistent, and repeatable. Comprehensive instructions
 for deploying and managing MongoDB clusters are available in
@@ -362,17 +364,17 @@ ensuring visibility into cluster health, performance, and usage patterns.
 
 A suite of [Makefile targets](https://github.com/igor-baiborodine/insurance-hub/blob/947f3e492e50e7efbcfa15762e6d54613be4ff85/k8s/Makefile#L288)
 enables seamless management of the Elasticsearch deployment lifecycle:
-- `es-operator-deploy` – installs the ECK operator in the `elastic-system` namespace
-- `es-operator-delete` – removes the ECK operator and its resources
-- `es-deploy` – deploys the Elasticsearch cluster into the target namespace with persistent storage
-  and HA-ready topology
-- `es-status` – displays current cluster status, including pods, PVCs, services, StatefulSets, and
-  custom resources
-- `es-delete` – deletes the Elasticsearch cluster while optionally preserving related resources
-- `es-purge` – entirely removes the cluster, associated secrets, and PVCs, ensuring a clean
-  environment for redeployment
-- `es-exporter-deploy` – deploys the Prometheus Elasticsearch exporter for monitoring metrics
-- `es-exporter-delete` – removes the Elasticsearch exporter deployment.
+- `es-operator-deploy` – Installs the ECK operator in the `elastic-system` namespace.
+- `es-operator-delete` – Removes the ECK operator and its resources.
+- `es-deploy` – Deploys the Elasticsearch cluster into the target namespace with persistent storage
+  and HA-ready topology.
+- `es-status` – Displays current cluster status, including pods, PVCs, services, StatefulSets, and
+  custom resources.
+- `es-delete` – Deletes the Elasticsearch cluster while optionally preserving related resources.
+- `es-purge` – Entirely removes the cluster, associated secrets, and PVCs, ensuring a clean
+  environment for redeployment.
+- `es-exporter-deploy` – Deploys the Prometheus Elasticsearch exporter for monitoring metrics.
+- `es-exporter-delete` – Removes the Elasticsearch exporter deployment.
 
 These targets ensure that every step, from installation to monitoring and teardown, is consistent
 and repeatable across both local and QA environments. Deployment and management instructions are
@@ -382,6 +384,47 @@ described in the ["Verify Elasticsearch Connectivity"](https://github.com/igor-b
 guide, ensuring the cluster is operational and ready for search workloads.
 
 #### Kafka
+
+Kafka plays a central role in enabling event-driven communication between services in the Insurance
+Hub. For cluster orchestration and lifecycle management, the [Strimzi Kafka Operator](https://github.com/strimzi/strimzi-kafka-operator)
+was selected. Strimzi automates every stage of Kafka deployment, from initial setup through rolling
+upgrades, scaling, monitoring, and teardown, using Kubernetes-native custom resource definitions for
+brokers, topics, users, and other key components. This declarative approach simplifies cluster
+administration and integrates tightly with the underlying Kubernetes API.
+
+In the QA environment, monitoring and observability are handled through Strimzi's
+built-in [Metrics Reporter](https://strimzi.io/blog/2025/10/06/strimzi-metrics-reporter/), which
+works seamlessly with the Kube Prometheus Stack. Exported metrics are visualized in Grafana
+dashboards, giving clear insight into cluster health and performance.
+
+A comprehensive suite of [Makefile targets](https://github.com/igor-baiborodine/insurance-hub/blob/947f3e492e50e7efbcfa15762e6d54613be4ff85/k8s/Makefile#L355)
+supports Kafka operations across both local dev and QA clusters:
+
+- `kafka-strimzi-operator-install` – Installs the Strimzi Kafka operator in the kafka-system
+  namespace.
+- `kafka-strimzi-operator-uninstall` – Uninstalls the operator and deletes the kafka-system
+  namespace.
+- `kafka-deploy` – Deploys a Kafka cluster in the target namespace, including brokers and supporting
+  services.
+- `kafka-status` – Displays current Kafka resources, including brokers, pods, services, PVCs, and
+  StrimziPodSets.
+- `kafka-delete` – Removes the Kafka cluster, preserving PVCs and StrimziPodSets for potential
+  recovery.
+- `kafka-purge` – Fully deletes the Kafka cluster along with all related NodePools, PVCs, and
+  StrimziPodSets.
+- `kafka-topics-list` – Lists all Kafka topics managed by the cluster.
+- `kafka-console-producer` – Launches an interactive Kafka console producer pod for sending messages
+  to a specified topic.
+- `kafka-console-consumer` – Launches a console consumer pod to read messages from a specified
+  topic.
+
+These automation targets ensure repeatable, reliable operations from initial deployment to final
+teardown and validation. Complete step-by-step instructions for cluster setup and management are
+provided in the ["Data/Kafka"](https://github.com/igor-baiborodine/insurance-hub/blob/main/k8s/cluster-apps-how-tos.md#kafka)
+section of the "Cluster Apps How-To’s" guide. Connectivity and functional validation—including
+producing and consuming test messages on dedicated topics—can be found in the 
+["Verify Kafka Producer/Consumer"](https://github.com/igor-baiborodine/insurance-hub/blob/main/k8s/tests/infra/verify-kafka-producer-consumer.md) 
+guide, ensuring that the deployed cluster is ready for robust, production-like messaging workloads.
 
 #### MinIO
 
