@@ -488,6 +488,33 @@ guide, ensuring MinIO tenants are production-ready for object storage operations
 
 ### Deploying Auxiliary Services
 
+#### jsreport
+
+[jsreport](https://github.com/jsreport/jsreport) delivers PDF generation capabilities for the
+Insurance Hub’s document service during Phase 1. Since this function is scheduled to be replaced by
+the [chromedp](https://github.com/chromedp/chromedp) library as part of
+the [Phase 4](https://github.com/igor-baiborodine/insurance-hub/blob/main/docs/system-overview-and-migration-analysis.md#phase-4-phased-service-migration-to-go-strangler-fig-pattern)
+migration to Go, jsreport is deployed as a single-node instance in both local development and QA
+environments. Deployment is handled using standard Kubernetes manifests, with Kustomize base and
+overlays providing environment-specific customization. This setup prioritizes simplicity,
+operational reliability, and minimum resource footprint.
+
+A concise suite of [Makefile targets](https://github.com/igor-baiborodine/insurance-hub/blob/947f3e492e50e7efbcfa15762e6d54613be4ff85/k8s/Makefile#L617) 
+supports jsreport lifecycle management:
+
+- `jsreport-deploy` – Installs jsreport in the designated service namespace using Kustomize overlays.
+- `jsreport-status` – Displays current pod, service, and PVC status in the active namespace.
+- `jsreport-delete` – Removes jsreport deployment resources from the cluster.
+- `jsreport-purge` – Deletes the associated persistent volume claim, ensuring full cleanup.
+- `jsreport-ui` – Enables local port-forwarding for quick access to the jsreport web UI.
+
+Detailed, step-by-step guidance for deployment and management is available in
+the ["Services/jsreport"](https://github.com/igor-baiborodine/insurance-hub/blob/main/k8s/cluster-apps-how-tos.md#jsreport)
+section of the "Cluster Apps How-To’s" manual. Connectivity and operational validation—including UI
+access and PDF report generation—are covered in
+the ["Verify jsreport PDF Generation"](https://github.com/igor-baiborodine/insurance-hub/blob/main/k8s/tests/infra/verify-jsreport-pdf-generation.md)
+guide, ensuring jsreport remains production-ready while the migration proceeds.
+
 ### Leveraging AI Tools During the "Lift" Phase
     * Practical examples of how AI tools assisted in the infrastructure setup.
     * Reflections on the benefits and limitations of using JetBrains AI tools.
