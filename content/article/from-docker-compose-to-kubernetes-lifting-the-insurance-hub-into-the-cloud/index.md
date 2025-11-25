@@ -515,15 +515,32 @@ access and PDF report generation—are covered in
 the ["Verify jsreport PDF Generation"](https://github.com/igor-baiborodine/insurance-hub/blob/main/k8s/tests/infra/verify-jsreport-pdf-generation.md)
 guide, ensuring jsreport remains production-ready while the migration proceeds.
 
-### Leveraging AI Tools During the "Lift" Phase
+### Final Polishing & Validation
+
+Before finalizing major changes to the Insurance Hub infrastructure, a focused round of polishing
+and validation was performed to ensure reliability and maintainability across both local and QA
+environments. This process involved a comprehensive review of all previous changes and necessary
+adjustments, including updates to manifest organization, Makefile automation, resource
+configurations, and documentation alignment. For more details, see pull request 
+[#43](https://github.com/igor-baiborodine/insurance-hub/pull/43). 
+
+Every step—including cluster provisioning, infrastructure deployment, and application setup—was
+revalidated using the latest iterations of the "Base Cluster How-To's" and "Cluster Apps How-To's"
+guides. Each workflow, from cluster bootstrapping to infrastructure component deployment, was
+retested with step-by-step instructions. Special care was taken to ensure each Makefile target
+produced the intended outcome, namespaces and overlays reflected the current platform architecture,
+and connectivity, health, and resource checks for all components were consistently successful.
+
+This systematic validation process guarantees platform robustness, prevents regression, and provides
+clear, up-to-date operational guidance. With this solid foundation, the Insurance Hub is ready for
+the next stage of migration and the integration of additional cloud-native features and automation.
+
+### Leveraging AI Tools
     * Practical examples of how AI tools assisted in the infrastructure setup.
     * Reflections on the benefits and limitations of using JetBrains AI tools.
     * Cost lessons and recommendations
 
-### Final Polishing & Validation
-    * Refactor k8s structure, resource manifests, and make targets.
-    * "Lift" validation checklist.
-    * Clear next-article teaser
+Conclusion and clear next-article teaser
 
 Continue reading the series ["Insurance Hub: The Way to Go"](/series/insurance-hub-the-way-to-go/):
 {{< series "Insurance Hub: The Way to Go" >}}
