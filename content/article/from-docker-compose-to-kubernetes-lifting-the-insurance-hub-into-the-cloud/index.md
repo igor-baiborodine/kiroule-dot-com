@@ -536,11 +536,26 @@ clear, up-to-date operational guidance. With this solid foundation, the Insuranc
 the next stage of migration and the integration of additional cloud-native features and automation.
 
 ### Leveraging AI Tools
-    * Practical examples of how AI tools assisted in the infrastructure setup.
-    * Reflections on the benefits and limitations of using JetBrains AI tools.
-    * Cost lessons and recommendations
 
-Conclusion and clear next-article teaser
+Leveraging AI Tools
+
+In my previous article, I described my approach to AI tools as advanced research aids—something like "Stack Overflow on steroids"—that supplement my own coding rather than replace it. However, at the beginning of this migration phase, I experimented with relying heavily on AI to implement everything. This approach backfired because my foundational knowledge of Kubernetes was limited. Crafting effective prompts requires at least a basic understanding of the subject matter. Initially, most AI-generated results were incorrect or did not work as intended, leading to time-consuming back-and-forth troubleshooting with the tools. As I progressed through deploying various components, I shifted my focus toward proactively learning the topics involved—such as identifying appropriate Kubernetes operators and studying documentation. This growing expertise helped me reduce AI interactions and obtain more accurate results. Despite these challenges, AI proved invaluable for debugging particularly tricky issues.
+
+Here is how I used AI tools during this step:
+
+Generate incremental, detailed GitHub issues aligned with the finalized project scope, using a consistent ticket template for clarity.
+Automate Makefile targets for cluster provisioning, infrastructure deployment, observability stack management, and lifecycle operations.
+Create Kubernetes manifests, Kustomize overlays, and resource configurations for both local (Kind) and production-like QA (K3s) clusters.
+Apply Kubernetes best practices, such as namespace isolation, operator-based management of stateful services (PostgreSQL, Kafka, MinIO, Elasticsearch), and combining Operators with Kustomize overlays for deployment.
+Draft structured documentation for cluster provisioning, observability setup (Prometheus, Grafana, Zipkin), and troubleshooting.
+Facilitate connectivity validation and health checks for stateful services using port-forwarding and test pods to ensure production readiness.
+My primary AI tools were JetBrains AI Assistant (Pro plan, $100/year) and Perplexity (Pro plan, $200/year). Comparing their usage limits highlights essential contrasts. Although Perplexity costs twice as much annually, its usage allowance is much more generous, enabling longer and more complex sessions without quickly hitting limits. JetBrains starts with just 10 AI credits every 30 days, which are easily exhausted—especially when using resource-intensive models like Claude Sonnet or ChatGPT. This limits how freely one can interact with the tool, with just a few demanding coding tasks potentially consuming the entire month's quota.
+
+JetBrains’ main advantage lies in its tight integration with IntelliJ IDEA, embedding AI within the IDE workflow for smooth, immediate coding assistance. However, this convenience has trade-offs: JetBrains’ Junie coding agent consumes credits rapidly, intensifying the sense of limited usage. Furthermore, JetBrains has recently imposed stricter limits, reducing overall quotas and necessitating even more cautious credit management. This contrasts with Perplexity’s more open usage model, which better suits heavier or more exploratory AI interactions despite its higher
+
+### Wrapping Up
+
+- Conclusion and clear next-article teaser
 
 Continue reading the series ["Insurance Hub: The Way to Go"](/series/insurance-hub-the-way-to-go/):
 {{< series "Insurance Hub: The Way to Go" >}}
