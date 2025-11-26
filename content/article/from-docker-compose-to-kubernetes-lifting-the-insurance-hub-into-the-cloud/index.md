@@ -584,7 +584,26 @@ model, which better suits heavier or more exploratory AI interactions despite it
 
 ### Wrapping Up
 
-- Conclusion and clear next-article teaser
+This article covered the first part of Phase 1 in the Insurance Hub migration journey: the "Lift"
+phase. During this stage, the focus was on lifting the entire legacy environment as-is from Docker
+Compose to production-like Kubernetes clusters—provisioning local and QA environments, deploying
+core infrastructure components, and establishing observability and operational foundations. This
+foundational work provided a stable platform that closely mirrors production, enabling validation
+and troubleshooting without disrupting existing workflows.
+
+The upcoming "Shift" phase will build on this groundwork. It involves targeted code modifications to
+transition Java services—such as updating them to use MinIO’s S3-compatible object storage instead
+of the legacy filesystem—and containerizing and deploying those services within Kubernetes.
+Additionally, service discovery will switch from Consul to Kubernetes-native DNS, streamlining
+inter-service communication and aligning with cloud-native design principles. The existing
+Java-based gateway will also be deployed and configured to use the Kubernetes service mesh. Lastly,
+GitOps automation with tools like ArgoCD or Flux will be introduced, enabling declarative,
+version-controlled CI/CD pipelines for reliable, auditable deployments.
+
+This phased "Lift and Shift" approach balances migration speed and operational continuity while
+setting the stage for deeper optimizations and migration to Go in later phases. Stay tuned for the next
+article, where the focus will shift to these code-level modernizations, container deployments, and
+automation strategies—key steps unlocking the full benefits of Kubernetes for the Insurance Hub.
 
 Continue reading the series ["Insurance Hub: The Way to Go"](/series/insurance-hub-the-way-to-go/):
 {{< series "Insurance Hub: The Way to Go" >}}
