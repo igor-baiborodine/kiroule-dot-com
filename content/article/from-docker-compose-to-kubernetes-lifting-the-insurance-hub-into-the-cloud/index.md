@@ -289,7 +289,7 @@ automates Zipkin operations in the QA environment:
   credentials.
 - `zipkin-es-user-create` – Automates the creation of the Elasticsearch role and user for Zipkin via
   in-cluster test pods.
-- `zipkin-install` – Installs Zipkin using the Helm chart in the **qa-monitoring** namespace, applies
+- `zipkin-install` – Installs Zipkin using the Helm chart in the `qa-monitoring` namespace, applies
   custom values, and turns off unnecessary readiness probes to enable a smoother rollout.
 - `zipkin-uninstall` – Removes Zipkin from the QA cluster completely.
 - `zipkin-status` – Reports current deployment, pod, service, and endpoint status for Zipkin.
