@@ -112,12 +112,13 @@ provided from the developer’s perspective for smooth development and proper op
 Hub within a Kubernetes cluster. Before proceeding with creating clusters, all necessary dependencies
 should be installed and configured correctly. To facilitate this process, I created a helper Makefile target
 named [prereq-k8s-all](https://github.com/igor-baiborodine/insurance-hub/blob/947f3e492e50e7efbcfa15762e6d54613be4ff85/k8s/Makefile#L72)
-that automates this setup.
+that automates this setup along with the [prereq-data-all](https://github.com/igor-baiborodine/insurance-hub/blob/947f3e492e50e7efbcfa15762e6d54613be4ff85/k8s/Makefile#L109)
+target to install all required data infrastructure dependencies.
 
 #### Local Dev
 
 Setting up a Kind cluster is straightforward and fast, making it ideal for the iterative development
-of the Insurance Hub’s six Java/Go microservices and accompanying infrastructure. To make cluster
+of the Insurance Hub’s eight Java/Go microservices and accompanying infrastructure. To make cluster
 operations repeatable and error-free, I created several [Makefile targets](https://github.com/igor-baiborodine/insurance-hub/blob/947f3e492e50e7efbcfa15762e6d54613be4ff85/k8s/bootstrap/Makefile#L24):
 
 - `local-dev-create` - Creates and starts a single-node Kind cluster.
