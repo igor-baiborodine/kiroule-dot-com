@@ -141,7 +141,7 @@ DefaultContentLanguage = "en"
   [markup.goldmark]
     [markup.goldmark.renderer]
       # Change to 'true' if you need to render raw HTMLs whithin your markdown content
-      unsafe = false
+      unsafe = true
   [markup.tableOfContents]
     endLevel = 5
     ordered = false

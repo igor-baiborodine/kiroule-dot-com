@@ -1,6 +1,7 @@
 ---
 title: "From Java to Go: Kicking Off the Insurance Hub Transformation" 
 date: 2025-07-28T17:00:00-04:00
+lastmod: 2025-11-25T17:00:00-04:00
 
 categories: [ "Java", "Go" , "Write-up" ]
 tags: [ "Java-to-Go" , "Software Migration", "Cloud-Native Go", "AI in Software Development" ]
@@ -134,15 +135,15 @@ operations.
 
 ![Go-based C4 System Container Diagram](insurance-hub-container-diagram-go.png)
 
-| **Aspect**                     | **Before (Current State)**                                                    | **After (Target State)**                                                                                                      |
-|:-------------------------------|:------------------------------------------------------------------------------|:------------------------------------------------------------------------------------------------------------------------------|
-| **Language & Framework**       | Java 14 with Micronaut framework                                              | Idiomatic Go, using the standard and proven lightweight libraries                                                             |
-| **Data Persistence**           | PostgreSQL, MongoDB, Elasticsearch                                            | PostgreSQL with JSONB (replaces MongoDB), Elasticsearch retained                                                              |
-| **Interservice Communication** | RESTful HTTP APIs (sync), Kafka (async)                                       | Internal gRPC, REST at the edge, Kafka (async)                                                                                |
-| **Deployment & Environment**   | Non-cloud-native, Docker Compose for local dev, bespoke production            | Fully cloud-native, Kubernetes-first, 12-factor principles                                                                    |
-| **Observability**              | Basic distributed tracing with Zipkin, no centralized logging or full metrics | Full-stack: OpenTelemetry tracing with Tempo, centralized logs with Loki, Prometheus metrics, Grafana dashboards and alerting |
-| **File & Artifact Storage**    | Local filesystem for docs, statements, rules                                  | S3-compatible object storage (MinIO)                                                                                          |
-| **Legacy Integrations**        | JSReports for PDFs, file-based tariff rules                                   | Replaced by Go libraries (chromedp) and in-memory Tarantool                                                                   |
+| **Aspect**                     | **Before (Current State)**                                                     | **After (Target State)**                                                                                                      |
+|:-------------------------------|:-------------------------------------------------------------------------------|:------------------------------------------------------------------------------------------------------------------------------|
+| **Language & Framework**       | Java 14 with Micronaut framework                                               | Idiomatic Go, using the standard and proven lightweight libraries                                                             |
+| **Data Persistence**           | PostgreSQL, MongoDB, Elasticsearch                                             | PostgreSQL with JSONB (replaces MongoDB), Elasticsearch retained                                                              |
+| **Interservice Communication** | RESTful HTTP APIs (sync), Kafka (async)                                        | Internal gRPC, REST at the edge, Kafka (async)                                                                                |
+| **Deployment & Environment**   | Non-cloud-native, Docker Compose for local dev, bespoke production             | Fully cloud-native, Kubernetes-first, 12-factor principles                                                                    |
+| **Observability**              | Basic distributed tracing with Zipkin, no centralized logging or full metrics  | Full-stack: OpenTelemetry tracing with Tempo, centralized logs with Loki, Prometheus metrics, Grafana dashboards and alerting |
+| **File & Artifact Storage**    | Local filesystem for docs, statements, rules                                   | S3-compatible object storage (MinIO)                                                                                          |
+| **Legacy Integrations**        | jsreport for PDFs, file-based tariff rules                                     | Replaced by Go libraries (chromedp) and in-memory Tarantool                                                                   |
 
 #### Key Architectural Shifts
 
@@ -229,24 +230,24 @@ practices. I focus on writing the code myself.
 
 **Which AI Tools Am I Using?**
 
-- **JetBrains AI Pro (with AI Assistant & Junie):**  
+- **JetBrains AI Assistant & Junie (Pro plan):**  
   In IntelliJ IDEA with the Go plugin, JetBrains AI Pro offers contextual code suggestions, chat
   help, and in-editor research, leveraging LLMs from OpenAI, Google, and Anthropic (Claude). I use
   AI assistance for knowledge, and explanations that go far beyond just pure code snippets. The 
   Junie AI Coding Agent joins in for complex refactoring, but my hands-on approach remains the 
   priority.
 
-- **Ollama Local Server (Small/Medium Models):**  
-  For privacy and speed, I run Ollama locally, using models like Code Llama, Phi-3 Mini, or Mistral
-  7B. These give me instant help with Go syntax or concepts without any cloud risk.
-
-- **Perplexity.ai (Free Tier):**  
+- **Perplexity.ai (Perplexity Pro plan):**  
   Perplexity synthesizes documentation, forums, and official sources into focused answers, perfect
   for deep-diving Go idioms or clarifying challenging topics—saving hours of scattered searching.
 
-- **Grammarly (with Generative AI):**  
+- **Grammarly.com with Generative AI (Pro plan):**  
   Sound engineering involves effective communication, so I use Grammarly’s paid AI suite to review
   and enhance my technical writing.
+
+- **Ollama Local Server (Small/Medium Models):**  
+  For privacy and speed, I run Ollama locally, using models like Code Llama, Phi-3 Mini, or Mistral
+  7B. These should provide me with instant help for Go syntax or concepts without any cloud risk.
 
 I keep a transparent log of all AI interactions and learnings in
 this [GitHub Gist](https://gist.github.com/igor-baiborodine/83b0385b50a6bba2c712149a36e21cbd), which
