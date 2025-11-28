@@ -24,9 +24,9 @@ This phase involves migrating the entire legacy application from the familiar co
 into a robust, production-like Kubernetes environment. By establishing parallel clusters—using Kind for
 local development and K3s for production-like QA—this critical first step, which I think of as the
 metaphorical "lift," validates our new platform and lays the stable groundwork necessary for the
-upcoming, deeper service-by-service "Shift" migration.
+upcoming, deeper service-by-service "shift" migration.
 
-In this installment, I'll guide you through the foundational infrastructure "Lift" phase of migrating the
+In this installment, I'll guide you through the foundational infrastructure "lift" phase of migrating the
 Insurance Hub to Kubernetes, specifically covering:
 
 - Provisioning local development and QA Kubernetes clusters using Kind and Rancher’s K3s, creating
@@ -41,7 +41,7 @@ Insurance Hub to Kubernetes, specifically covering:
 
 This second article in the series focuses on establishing our cloud-native platform foundation by
 replicating the existing environment within Kubernetes. Specific Java service modifications and gateway
-deployments are reserved for the next "Shift" phase, ensuring this initial "Lift" prioritizes minimal
+deployments are reserved for the next "shift" phase, ensuring this initial "lift" prioritizes minimal
 disruption while validating stable operation on our new Kubernetes infrastructure.
 
 {{< toc >}}
@@ -309,7 +309,7 @@ guide. This ensures trace functionality is robust and ready for legacy service m
 A reliable and maintainable [PostgreSQL](https://www.postgresql.org/) deployment is essential for
 supporting stateful microservices across both QA and local environments. The initial setup used
 Bitnami’s Helm chart to provision a shared PostgreSQL cluster for all Java microservices. After
-Bitnami discontinued free support, the deployment strategy evolved to embrace [CloudNativePG](https://cloudnative-pg.io/)—a
+Bitnami discontinued free support, our deployment strategy evolved to embrace [CloudNativePG](https://cloudnative-pg.io/)—a
 Kubernetes-native Operator meticulously designed for production-grade PostgreSQL management.
 
 To align with best practices described in resources such as ["Maximizing Microservice Databases with
@@ -591,14 +591,14 @@ tag.
 ### Wrapping Up
 
 This article has covered the initial, critical portion of Phase 1 in the Insurance Hub migration
-journey: the "Lift" phase. During this stage, my focus was squarely on migrating the entire legacy
+journey: the "lift" phase. During this stage, my focus was squarely on migrating the entire legacy
 environment as-is from Docker Compose to production-like Kubernetes clusters. This involved diligently
 provisioning local and QA environments, deploying core infrastructure components, and establishing
 robust observability and operational foundations. This foundational work has yielded a stable platform
 that closely mirrors our target production environment, enabling thorough validation and troubleshooting
 without disrupting existing workflows.
 
-The upcoming "Shift" phase will build directly on this groundwork. It involves targeted code
+The upcoming "shift" phase will build directly on this groundwork. It involves targeted code
 modifications to transition our Java services—such as updating them to use MinIO’s S3-compatible object
 storage instead of the legacy filesystem—and then containerizing and deploying those services within
 Kubernetes. Additionally, service discovery will migrate from Consul to Kubernetes-native DNS,
