@@ -20,6 +20,48 @@ With those foundations in place, the rest of the work will be focused on making 
 
 {{< toc >}}
 
-### Details 1
-### Details 2
-### Details 3
+### Shift Backlog & Preparations
+
+While the previous "lift" phase was characterized as infra-first and largely app-agnostic, the "shift" marks the transition to an **app-first, infra-consuming** approach. The foundational cluster work is complete; now, the legacy Java microservices must be modified to utilize these new cloud-native resources. This requires a deliberate move away from local-only shortcuts—such as in-memory databases and local file writes—toward durable, cluster-managed services.
+
+To maintain momentum without introducing excessive instability, the shift has been organized into four primary deliverables. I have prioritized storage and state first, followed by networking and service discovery, ensuring that the most invasive changes are validated before the final application cutover.
+
+| Ticket    | Deliverable                             | Description                                                                                                                       |
+|:----------|:----------------------------------------|:----------------------------------------------------------------------------------------------------------------------------------|
+| **[7](https://github.com/users/igor-baiborodine/projects/8?pane=issue&itemId=124054538&issue=igor-baiborodine%7Cinsurance-hub%7C12)** | **MinIO/S3 Integration**                | Modify `payment-service` and `documents-service` to use S3-compatible SDKs for file operations against MinIO.                     |
+| **[8](https://github.com/users/igor-baiborodine/projects/8?pane=issue&itemId=124054674&issue=igor-baiborodine%7Cinsurance-hub%7C13)** | **PostgreSQL External Persistence**     | Transition services from in-memory H2 to dedicated PostgreSQL clusters running in the Kubernetes environments.                    |
+| **[9](https://github.com/users/igor-baiborodine/projects/8?pane=issue&itemId=124054790&issue=igor-baiborodine%7Cinsurance-hub%7C14)** | **Gateway in K8s**                      | Deploy the `agent-portal-gateway` as the initial ingress point, establishing the external routing boundary.                       |
+| **[10](https://github.com/users/igor-baiborodine/projects/8?pane=issue&itemId=124054853&issue=igor-baiborodine%7Cinsurance-hub%7C15)**   | **Per-service deploy + Consul removal** | Decommission Consul; migrate inter-service communication to Kubernetes-native DNS and finalize per-service Kustomize deployments. |
+
+The rationale for this risk-ordering is pragmatic: storage and database connectivity represent the highest points of failure. By resolving these first, the backend services can be validated as stable workloads. Once established, inter-service discovery and gateway routing are configured to wire the system together into a functional mesh.
+
+Supporting a productive local development loop while interacting with a remote or Kind-based cluster requires careful planning of the networking surface. Since all Micronaut-based Java services default to port `8080`, running multiple services locally via an IDE would inevitably lead to port exhaustion and conflicts.
+
+To mitigate this, a deterministic port assignment table was established. These mappings are implemented through `application-local.yaml` configuration files, ensuring each service has a non-conflicting home on the developer's localhost.
+
+| Service             | Local Port | Service                 | Local Port |
+|:--------------------|:-----------|:------------------------|:-----------|
+| `auth-service`      | 8081       | `payment-service`       | 8086       |
+| `chat-service`      | 8082       | `pricing-service`       | 8087       |
+| `dashboard-service` | 8083       | `product-service`       | 8088       |
+| `document-service`  | 8084       | `policy-search-service` | 8089       |
+| `policy-service`    | 8085       | `agent-portal-gateway`  | 8090       |
+
+A similar logic was applied to the stateful components running inside the cluster. Because a "dedicated cluster per microservice" approach was chosen for PostgreSQL, unique local ports must be exposed to allow IDE-based services to reach their respective data stores. 
+
+| Postgres Service                     | Cluster port mapping  |
+|--------------------------------------|-----------------------|
+| `svc/local-dev-postgres-auth-rw`     | 5432 → localhost:5442 |
+| `svc/local-dev-postgres-document-rw` | 5432 → localhost:5452 |
+| `svc/local-dev-postgres-payment-rw`  | 5432 → localhost:5462 |
+| `svc/local-dev-postgres-policy-rw`   | 5432 → localhost:5472 |
+| `svc/local-dev-postgres-pricing-rw`  | 5432 → localhost:5482 |
+
+Finally, since two MinIO tenants were used (document and payment), local dev MinIO endpoints were also assigned non-overlapping ports so that each service could be tested against its tenant deterministically during the S3 migration work:
+
+| MinIO Tenant Service              | Port |
+|-----------------------------------|------|
+| `svc/local-dev-minio-document-hl` | 9001 |
+| `svc/local-dev-minio-payment-hl`  | 9002 |
+
+This upfront organization ensures that the environment's infrastructure connectivity remains transparent, and the focus stays on the code modifications required for the shift.
