@@ -1,5 +1,5 @@
 ---
-title: "Lift Completed, Now Shift: Making the Insurance Hub Kubernetes-Native (Enough)" 
+title: "Lift Completed, Now Shift: Making the Insurance Hub Kubernetes-Native (Enough)"
 date: 2026-02-05T08:00:00-04:00
 
 categories: [ "Java", "Go" , "Write-up" ]
@@ -47,7 +47,7 @@ To mitigate this, a deterministic port assignment table was established. These m
 | `document-service`  | 8084       | `policy-search-service` | 8089       |
 | `policy-service`    | 8085       | `agent-portal-gateway`  | 8090       |
 
-A similar logic was applied to the stateful components running inside the cluster. Because a "dedicated cluster per microservice" approach was chosen for PostgreSQL, unique local ports must be exposed to allow IDE-based services to reach their respective data stores. 
+A similar logic was applied to the stateful components running inside the cluster. Because a "dedicated cluster per microservice" approach was chosen for PostgreSQL, unique local ports must be exposed to allow IDE-based services to reach their respective data stores.
 
 | Postgres Service                     | Cluster port mapping  |
 |--------------------------------------|-----------------------|
@@ -65,3 +65,19 @@ Finally, since two MinIO tenants were used (document and payment), local dev Min
 | `svc/local-dev-minio-payment-hl`  | 9002 |
 
 This upfront organization ensures that the environment's infrastructure connectivity remains transparent, and the focus stays on the code modifications required for the shift.
+
+### Pragmatic Persistence: Adapting Storage for S3 and MinIO
+
+The transition of stateful workloads began with [Ticket 7](https://github.com/users/igor-baiborodine/projects/8?pane=issue&itemId=124054538&issue=igor-baiborodine%7Cinsurance-hub%7C12), which centered on moving the storage layer from local filesystems and database blobs to S3-compatible object storage. I targeted the `documents-service` and `payment-service` first, as they represented the most significant dependencies on local persistence. Before applying any code changes, I needed a stable local development loop; I added `application-local.yml` configurations to ensure services could run in IntelliJ while interacting with the MinIO tenants in the local dev's Kind cluster.
+
+During this initial setup, I encountered an immediate bottleneck: even though Consul decommissioning was scheduled for a later deliverable, I had to prune the `micronaut-discovery-client` dependencies and configurations immediately. Application startup was failing as the services attempted to reach a discovery server that no longer existed in the new architecture—a pragmatic pivot was required to unblock the refactoring.
+
+Provisioning the MinIO tenants required more than just creating buckets; I chose to strictly adhere to MinIO best practices to ensure security and scalability. This involved implementing purpose-driven naming conventions, granular bucket sharding, and enforcing the principle of least privilege through dedicated IAM policies. While these configurations can be managed via the MinIO Console UI, doing so manually across local-dev and QA environments is error-prone and inconsistent. To ensure deployments remained reproducible and "boring," I automated the creation of buckets, service users, and Kubernetes secrets via new [Makefile targets](https://github.com/igor-baiborodine/insurance-hub/blob/3bab17d580e9baa5702d67715e60301bb749e33e/k8s/Makefile#L624):
+
+* `minio-svc-bucket-create` — Provisions a purpose-specific bucket for a microservice.
+* `minio-svc-user-secret-create` — Generates the Opaque Kubernetes secret for service credentials.
+* `minio-svc-user-with-policy-create` — Creates the MinIO user and attaches the necessary S3 IAM policy.
+
+In the Kotlin-based `documents-service`, I made a deliberate architectural choice to avoid a database migration. To keep the `PolicyDocument` class unchanged, I adapted the `bytes` field to serve a dual purpose: storing raw PDF binary data for legacy records or storing the UTF-8 encoded MinIO object key for new documents. I encapsulated this logic within a new `PolicyDocumentService`, which uses a regex-based pattern check to determine whether to return the database bytes directly or fetch the content from S3 via the `MinioClient`.
+
+The Java-based `payment-service` underwent a similar overhaul. I refactored the `InPaymentRegistrationService` to replace legacy `java.io` logic with S3 operations, using the MinIO SDK to verify bank statement existence and stream CSV content for processing. After a successful import, files are now marked as processed by copying them to a "processed" prefix within the bucket. I also simplified the `BankStatementFile` class, stripping out file manipulation logic to focus strictly on object key construction. Both services were then integrated with a `MinioClientFactory` for client lifecycle management, completing the shift toward a storage-agnostic architecture. For a closer look at the diffs and testing evidence, consult the [associated pull request](https://github.com/igor-baiborodine/insurance-hub/pull/46).
