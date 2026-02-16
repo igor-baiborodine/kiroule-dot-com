@@ -20,7 +20,7 @@ With those foundations in place, the rest of the work will be focused on making 
 
 {{< toc >}}
 
-### Shift Backlog & Preparations
+### Shift Scoping: Prioritizing Deliverables and Networking Surface
 
 While the previous "lift" phase was characterized as infra-first and largely app-agnostic, the "shift" marks the transition to an **app-first, infra-consuming** approach. The foundational cluster work is complete; now, the legacy Java microservices must be modified to utilize these new cloud-native resources. This requires a deliberate move away from local-only shortcuts—such as in-memory databases and local file writes—toward durable, cluster-managed services.
 
@@ -107,3 +107,55 @@ The transition to Kubernetes-native manifests required a rigorous adherence to b
 Looking ahead to the Go migration, I faced a structural challenge: how to run Java and Go versions of the same service side-by-side without creating a mess of manifests. I chose a directory structure that separates these implementations at both the Kustomize base and overlay levels. For the `auth` service, the legacy Java manifests reside in `k8s/apps/svc/auth/base/legacy/`, while the new Go implementation occupies the parent `k8s/apps/svc/auth/base/`.
 
 This layout enables a pragmatic "Strangler Fig" approach; I can deploy either version independently or both simultaneously by targeting the specific overlay. When the legacy gateway is eventually replaced by Envoy Proxy, traffic routing between these versions will be managed via Ingress rules rather than invasive manifest changes, ensuring the underlying infrastructure remains stable and operationally transparent.
+
+### Automated Orchestration: Standardizing the Service Lifecycle
+
+Deployments only stay reliable when they are automated end-to-end. To automate the five-step lifecycle mentioned above and to enable repeatable builds for Java services, a set of Makefile Docker targets was created. These handle both individual service builds and bulk operations across the entire legacy stack:
+
+* `docker-java-svc-build` – Builds a Docker image for a specific Java service.
+* `docker-java-svc-all-build` – Builds Docker images for all Java services.
+* `docker-frontend-build` – Builds the Vue frontend image.
+
+To streamline service deployment across Kind (local-dev) and LXD/K3s (QA) environments, a dedicated set of Makefile targets was created for loading and unloading service images and orchestrating Kustomize deployments:
+
+* `svc-image-local-dev-load` – Loads a locally built image into the local-dev Kind cluster.
+* `svc-image-local-dev-unload` – Removes an image from Kind cluster nodes.
+* `svc-image-qa-load` – Loads an image into QA LXD cluster nodes.
+* `svc-deploy` – Deploys a service via Kustomize overlay.
+* `svc-delete` – Purges a service deployment.
+
+Implementing a multi-namespace architecture for the Insurance Hub—where infrastructure components like PostgreSQL and MinIO reside in `qa-data` while services occupy `qa-svc`—introduced a specific challenge: secret accessibility. During the infrastructure deployment phase, service-specific credentials, such as MinIO access keys or Postgres user secrets, are generated within the infrastructure’s own namespace to keep them local to the resource they protect. However, Kubernetes strictly enforces namespace boundaries, preventing a Deployment in `qa-svc` from directly mounting a Secret stored in `qa-data`. I had to decide whether to implement complex RBAC for cross-namespace ServiceAccount access or adopt a more pragmatic, portable solution.
+
+I chose to handle this by implementing "copy-on-create" or "copy-after-create" patterns within the project’s Make targets. As seen in the `minio-svc-user-secret-create` target, the process first creates the master secret in the infrastructure namespace and then immediately pipes the YAML through `sed` to re-apply it to the service namespace. I opted for this approach because it maintains a simpler RBAC model and avoids the configuration complexity of cross-namespace secret references introduced in newer Kubernetes versions. This ensures that the secret’s lifecycle remains within the control of the service deployment while matching our existing Makefile automation patterns, providing a consistent and reproducible setup across all environments from `local-dev` to `qa`.
+
+Before starting on implementing the deployment of the `agent-portal-gateway`, I established the migration sequence. The migration should start with core auth and edge, then move outward to lower‑risk or less-central services, wired via Kustomize overlays for `local-dev` and `qa`.
+
+| Sequence | Category                | Service                 | Description                                                                                 |
+|:---------|:------------------------|:------------------------|:--------------------------------------------------------------------------------------------|
+| 1        | **Gateway & Auth**      | `agent-portal-gateway`  | Single entry point to backend services; enables early routing smoke tests.                  |
+| 2        | **Gateway & Auth**      | `auth-service`          | Required for most flows; external clients depend on it.                                     |
+| 3        | **Gateway & Auth**      | `web-vue` (frontend)    | Validates the full browser → gateway → auth path once core edge/auth are stable.            |
+| 4        | **Supporting Services** | `document-service`      | Relatively isolated; not critical to core policy/payment flows.                             |
+| 5        | **Supporting Services** | `product-service`       | Provides reference data; used by others but off the main transaction path initially.        |
+| 6        | **Supporting Services** | `policy-search-service` | Read-only over Elasticsearch, no critical writes.                                           |
+| 7        | **Supporting Services** | `dashboard-service`     | Primarily read-heavy; safe once upstreams (policy/product/search) are in place.             |
+| 8        | **Supporting Services** | `chat-service`          | Can be validated independently (WebSocket + API).                                           |
+| 9        | **Core Transactional**  | `policy-service`        | Central domain logic; depends on product, document, and search.                             |
+| 10       | **Core Transactional**  | `payment-service`       | Financially critical; should follow a stable policy path and upstreams.                     |
+| 11       | **Core Transactional**  | `pricing-service`       | Critical but narrower; depends on product/policy and can be proven via internal APIs first. |
+
+With the decommissioning of Consul, service discovery has transitioned to a Kubernetes-native model, leveraging the cluster's internal DNS (CoreDNS). In this architecture, manual registration is replaced by deterministic FQDNs following the standard `<service>.<namespace>.svc.cluster.local` pattern. This shift allows services to resolve their dependencies without an external agent; for instance, the `payment-service` in the `local-dev` environment now reaches its database at `local-dev-postgres-payment-rw.local-dev-all.svc.cluster.local` and its Kafka bootstrap server at `local-dev-kafka-kafka-bootstrap.local-dev-all.svc.cluster.local`.
+
+I chose to implement these mappings through Kustomize `configMapGenerator` literals, which inject the correct DNS endpoints directly into the services' environment variables. By using these cluster-internal records, I’ve eliminated the overhead of managing a separate discovery sidecar while gaining the reliability of Kubernetes' built-in service abstractions. This approach is not only more robust but also operationally cleaner, as a simple `kubectl get svc -A` combined with a bit of `awk` formatting provides a complete, real-time map of the cluster's internal routing surface. For example, auth service related internal DNS:
+
+```shell
+kubectl get svc -A --no-headers | awk '{printf "%s.%s.svc.cluster.local\n", $2, $1}'
+local-dev-auth-api-legacy.local-dev-all.svc.cluster.local
+local-dev-postgres-auth-r.local-dev-all.svc.cluster.local
+local-dev-postgres-auth-ro.local-dev-all.svc.cluster.local
+local-dev-postgres-auth-rw.local-dev-all.svc.cluster.local
+```
+
+The technical "recipe" for a service deployment is best exemplified by the `document-service` configuration in the QA environment. Within the `k8s/overlays/qa/svc/document/legacy` folder, the `kustomization.yaml` acts as the primary orchestrator. I configured it to target the `qa-svc` namespace and apply a `qa-` name prefix and `-legacy` suffix, ensuring that these resources are distinct from the future Go implementation. The accompanying `deployment-patch.yaml` provides the environment-specific "glue"—it defines the resource requests and limits tailored for the K3s cluster and mounts the necessary PostgreSQL and MinIO secrets. These secrets are accessed locally within the `qa-svc` namespace, leveraging the "copy-on-create" Makefile automation to maintain strict namespace isolation for the underlying data stores.
+
+The wiring of external dependencies is handled through a `configMapGenerator` in the overlay, which injects the internal DNS FQDNs directly into the service's environment. For the `document-service`, this involves mapping variables like `MINIO_TENANT_ENDPOINT` and `PG_HOST` to their respective cluster-internal records, such as `qa-postgres-document-rw.qa-data.svc.cluster.local`. I also used this layer to manage environment-specific toggles, such as enabling Zipkin tracing and defining the `JSREPORT_HOST` endpoint. By centralizing these connection strings and resource adjustments in the overlay, the base manifests remain generic and portable, allowing the deployment logic to scale across environments without invasive changes to the core application templates.
