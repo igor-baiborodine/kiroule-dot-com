@@ -1,6 +1,7 @@
 ---
 title: "From Docker Compose to Kubernetes: Lifting the Insurance Hub into the Cloud"
-date: 2026-02-07T08:00:00-04:00
+date: 2025-11-11T17:00:00-04:00
+lastmod: 2026-02-07T08:00:00-04:00
 
 categories: [ "Java", "Go" , "Write-up" ]
 tags: [ "Java-to-Go", "DevOps", "Kubernetes", "Observability", "Infrastructure as Code" ]
