@@ -16,6 +16,7 @@ enableRobotsTXT = true
 DefaultContentLanguage = "en"
 
 [params]
+  siteWidth = "1000px"
   # Custom CSS / JS modules that will be imported by the template.
   # Files are relative to the static/ directory or a URL.
   # Files are imported in the order they appear here, after
