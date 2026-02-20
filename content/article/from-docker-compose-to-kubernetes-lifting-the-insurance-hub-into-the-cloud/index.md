@@ -141,11 +141,12 @@ remaining lightweight enough for local development.
 My development machine is equipped with 24 logical CPUs (16 physical cores) and 64 GB of RAM. Recognizing
 that Kubernetes control plane components—such as the API server, scheduler, controller manager, and
 etcd—are resource-intensive, I allocated more CPU and memory to the master node. The resources were
-distributed as follows, dedicating half of the available machine’s resources to the future cluster:
+distributed as follows, dedicating a substantial portion of the host’s resources to the cluster to
+ensure stable overhead for the management plane and stateful workloads:
 
-- Master LXD VM: **6** CPU, **16** GiB RAM
-- Worker LXD VM 1: **3** CPU, **8** GiB RAM
-- Worker LXD VM 2: **3** CPU, **8** GiB RAM
+- Master LXD VM: **7** CPU, **16** GiB RAM, disk size **100** GiB
+- Worker LXD VM 1: **5** CPU, **12** GiB RAM, disk size **80** GiB
+- Worker LXD VM 2: **5** CPU, **12** GiB RAM, disk size **80** GiB
 
 Similar to the local development setup, I implemented a suite of [Makefile targets](https://github.com/igor-baiborodine/insurance-hub/blob/947f3e492e50e7efbcfa15762e6d54613be4ff85/k8s/bootstrap/Makefile#L65)
 to ensure consistent and reliable management of QA cluster operations:
