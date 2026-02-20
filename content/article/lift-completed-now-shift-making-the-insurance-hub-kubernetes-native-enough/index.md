@@ -49,7 +49,7 @@ To mitigate this, a deterministic port assignment table was established. These m
 
 A similar logic was applied to the stateful components running inside the cluster. Because a "dedicated cluster per microservice" approach was chosen for PostgreSQL, unique local ports must be exposed to allow IDE-based services to reach their respective data stores.
 
-| Postgres Service                     | Cluster port mapping  |
+| Postgres Service                     | Cluster Port Mapping  |
 |--------------------------------------|-----------------------|
 | `svc/local-dev-postgres-auth-rw`     | 5432 → localhost:5442 |
 | `svc/local-dev-postgres-document-rw` | 5432 → localhost:5452 |
@@ -59,10 +59,10 @@ A similar logic was applied to the stateful components running inside the cluste
 
 Finally, since two MinIO tenants were used (document and payment), local dev MinIO endpoints were also assigned non-overlapping ports so that each service could be tested against its tenant deterministically during the S3 migration work:
 
-| MinIO Tenant Service              | Port |
-|-----------------------------------|------|
-| `svc/local-dev-minio-document-hl` | 9001 |
-| `svc/local-dev-minio-payment-hl`  | 9002 |
+| MinIO Tenant Service              | Cluster Port Mapping  |
+|-----------------------------------|-----------------------|
+| `svc/local-dev-minio-document-hl` | 9000 → localhost:9001 |
+| `svc/local-dev-minio-payment-hl`  | 9000 → localhost:9002 |
 
 This upfront organization ensures that the environment's infrastructure connectivity remains transparent, and the focus stays on the code modifications required for the shift.
 
@@ -209,3 +209,13 @@ In the QA environment, I prioritized using LXD-based snapshot targets at critica
 - `qa-nodes-snapshot` — Captures a named recovery point of the cluster VMs for rapid recreation.
 - `cluster-infra-deploy` — Deploys the foundational infrastructure, including Kafka, PostgreSQL clusters, and MinIO tenants.
 - `cluster-svc-deploy` — Executes the final application rollout, automating image loading and Kustomize-based deployment.
+
+### AI Implementation: Optimizing Service Recipes and Agent-Assisted Refactoring
+
+The "shift" work reinforced a lesson from the previous phase: AI is an effective accelerator for research and implementation, provided it is governed by a disciplined routine. During this stage, the AI tools were instrumental in establishing service conventions and finalizing the technical "recipe" for my K8s workloads. Once a pattern was validated for a single service—covering Kustomize bases, environment-specific overlays, and resource constraints—producing the manifests for the remaining ten became a routine of feeding the AI assistant the specific service context and the established template.
+
+My current workflow relies on a multi-tool strategy to balance cost and capability. For general implementation and development within the IDE, I primarily use the JetBrains AI Assistant in chat mode, configured with the Gemini 3 Flash model. This provides a pragmatic balance of speed and response quality. While JetBrains recently increased the monthly Pro credits from 10.00 to 12.46, this remains a finite resource that requires careful management. When these credits are exhausted, or when I need to perform deep-dive technical research into Kubernetes idioms or SDK behaviors, I switch to Perplexity Pro. While Perplexity is superior for synthesizing documentation, I find it more cumbersome for implementation tasks, as source code files must be manually attached to the prompt.
+
+I also explored the more autonomous "agent" modes available within the IDE. While JetBrains offers Junie and Claude-based agents, their high credit consumption initially made me hesitant to use them for routine tasks. However, I took advantage of a recent promotion for the OpenAI Codex-based agent to implement several cross-cutting service improvements. I used the agent to scaffold and refine the `LoggingFilter` for the gateway, the AOP-based `EventPublisherLoggingInterceptor` for Kafka visibility, and the `JsReportTemplateProvisioner` logic.
+
+The AI was particularly effective at resolving the "stubborn" issues that surfaced during cluster validation—such as the NGINX path matching inconsistencies and the Micronaut 2 RBAC conflicts mentioned earlier. By providing the AI with the specific error logs and my existing manifests, I was able to quickly iterate on the `application-local.yaml` mappings and the `resolver` configurations. As with the "lift" phase, I continue to maintain a transparent log of these interactions, ensuring that while the AI assists with the heavy lifting of boilerplate and debugging, the architectural rationale remains firmly under my control.
