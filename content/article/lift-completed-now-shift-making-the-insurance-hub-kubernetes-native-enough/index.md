@@ -10,7 +10,7 @@ series: [ "Insurance Hub: The Way to Go" ]
 author: "Igor Baiborodine" 
 ---
 
-The Insurance Hub migration continues, and after completing Phase 1’s “lift” work described in the previous [post](/article/from-docker-compose-to-kubernetes-lifting-the-insurance-hub-into-the-cloud/)—provisioning Kubernetes clusters and standing up all the supporting infrastructure—it’s time to focus on the “shift” that makes the legacy system truly run on that new foundation. In this article, a summary of the targeted changes needed to move the existing Java services into Kubernetes will be provided.
+The Insurance Hub migration continues. Following [Phase 1's "lift"](/article/from-docker-compose-to-kubernetes-lifting-the-insurance-hub-into-the-cloud/)—provisioning clusters and infrastructure—we are now focusing on the "shift" required to make the legacy system run on this new foundation. This article summarizes the targeted changes needed to move our existing Java services into Kubernetes.
 
 <!--more-->
 
@@ -26,12 +26,12 @@ While the previous "lift" phase was characterized as infra-first and largely app
 
 To maintain momentum without introducing excessive instability, the shift has been organized into four primary deliverables. I have prioritized storage and state first, followed by networking and service discovery, ensuring that the most invasive changes are validated before the final application cutover.
 
-| Ticket    | Deliverable                             | Description                                                                                                                       |
-|:----------|:----------------------------------------|:----------------------------------------------------------------------------------------------------------------------------------|
-| **[7](https://github.com/users/igor-baiborodine/projects/8?pane=issue&itemId=124054538&issue=igor-baiborodine%7Cinsurance-hub%7C12)** | **MinIO/S3 Integration**                | Modify `payment-service` and `documents-service` to use S3-compatible SDKs for file operations against MinIO.                     |
-| **[8](https://github.com/users/igor-baiborodine/projects/8?pane=issue&itemId=124054674&issue=igor-baiborodine%7Cinsurance-hub%7C13)** | **PostgreSQL External Persistence**     | Transition services from in-memory H2 to dedicated PostgreSQL clusters running in the Kubernetes environments.                    |
-| **[9](https://github.com/users/igor-baiborodine/projects/8?pane=issue&itemId=124054790&issue=igor-baiborodine%7Cinsurance-hub%7C14)** | **Gateway in K8s**                      | Deploy the `agent-portal-gateway` as the initial ingress point, establishing the external routing boundary.                       |
-| **[10](https://github.com/users/igor-baiborodine/projects/8?pane=issue&itemId=124054853&issue=igor-baiborodine%7Cinsurance-hub%7C15)**   | **Per-service deploy + Consul removal** | Decommission Consul; migrate inter-service communication to Kubernetes-native DNS and finalize per-service Kustomize deployments. |
+| Ticket        | Deliverable                             | Description                                                                                                                       |
+|:---------------------------------------------------------------------------------------------------------------------------------------|:----------------------------------------|:----------------------------------------------------------------------------------------------------------------------------------|
+| **[7](https://github.com/users/igor-baiborodine/projects/8?pane=issue&itemId=124054538&issue=igor-baiborodine%7Cinsurance-hub%7C12)**  | **MinIO/S3 Integration**                | Modify `payment-service` and `documents-service` to use S3-compatible SDKs for file operations against MinIO.                     |
+| **[8](https://github.com/users/igor-baiborodine/projects/8?pane=issue&itemId=124054674&issue=igor-baiborodine%7Cinsurance-hub%7C13)**  | **PostgreSQL External Persistence**     | Transition services from in-memory H2 to dedicated PostgreSQL clusters running in the Kubernetes environments.                    |
+| **[9](https://github.com/users/igor-baiborodine/projects/8?pane=issue&itemId=124054790&issue=igor-baiborodine%7Cinsurance-hub%7C14)**  | **Gateway in K8s**                      | Deploy the `agent-portal-gateway` as the initial ingress point, establishing the external routing boundary.                       |
+| **[10](https://github.com/users/igor-baiborodine/projects/8?pane=issue&itemId=124054853&issue=igor-baiborodine%7Cinsurance-hub%7C15)** | **Per-service deploy + Consul removal** | Decommission Consul; migrate inter-service communication to Kubernetes-native DNS and finalize per-service Kustomize deployments. |
 
 The rationale for this risk-ordering is pragmatic: storage and database connectivity represent the highest points of failure. By resolving these first, the backend services can be validated as stable workloads. Once established, inter-service discovery and gateway routing are configured to wire the system together into a functional mesh.
 
@@ -57,7 +57,7 @@ A similar logic was applied to the stateful components running inside the cluste
 | `svc/local-dev-postgres-policy-rw`   | 5432 → localhost:5472 |
 | `svc/local-dev-postgres-pricing-rw`  | 5432 → localhost:5482 |
 
-Finally, since two MinIO tenants were used (document and payment), local dev MinIO endpoints were also assigned non-overlapping ports so that each service could be tested against its tenant deterministically during the S3 migration work:
+Finally, since two MinIO tenants were used (document and payment), local development MinIO endpoints were also assigned non-overlapping ports so that each service could be tested against its tenant deterministically during the S3 migration work:
 
 | MinIO Tenant Service              | Cluster Port Mapping  |
 |-----------------------------------|-----------------------|
@@ -68,11 +68,11 @@ This upfront organization ensures that the environment's infrastructure connecti
 
 ### Pragmatic Persistence: Adapting Storage for S3 and MinIO
 
-The transition of stateful workloads began with [Ticket 7](https://github.com/users/igor-baiborodine/projects/8?pane=issue&itemId=124054538&issue=igor-baiborodine%7Cinsurance-hub%7C12), which centered on moving the storage layer from local filesystems and database blobs to S3-compatible object storage. I targeted the `documents-service` and `payment-service` first, as they represented the most significant dependencies on local persistence. Before applying any code changes, I needed a stable local development loop; I added `application-local.yml` configurations to ensure services could run in IntelliJ while interacting with the MinIO tenants in the local dev's Kind cluster.
+The transition of stateful workloads began with [Ticket 7](https://github.com/users/igor-baiborodine/projects/8?pane=issue&itemId=124054538&issue=igor-baiborodine%7Cinsurance-hub%7C12), which centered on moving the storage layer from local filesystems and database blobs to S3-compatible object storage. I targeted the `documents-service` and `payment-service` first, as they represented the most significant dependencies on local persistence. Before applying any code changes, I needed a stable local development loop; I added `application-local.yml` configurations to ensure services could run in IntelliJ while interacting with the MinIO tenants in the `local-dev` Kind cluster.
 
-During this initial setup, I encountered an immediate bottleneck: even though Consul decommissioning was scheduled for a later deliverable, I had to prune the `micronaut-discovery-client` dependencies and configurations immediately. Application startup was failing as the services attempted to reach a discovery server that no longer existed in the new architecture—a pragmatic pivot was required to unblock the refactoring.
+While Consul decommissioning was slated for a later phase, initial testing revealed an immediate bottleneck. The `micronaut-discovery-client` was triggering startup failures by searching for a non-existent server. I made the pragmatic choice to prune these dependencies immediately to unblock the S3 refactoring.
 
-Provisioning the MinIO tenants required more than just creating buckets; I chose to strictly adhere to MinIO best practices to ensure security and scalability. This involved implementing purpose-driven naming conventions, granular bucket sharding, and enforcing the principle of least privilege through dedicated IAM policies. While these configurations can be managed via the MinIO Console UI, doing so manually across local-dev and QA environments is error-prone and inconsistent. To ensure deployments remained reproducible and "boring," I automated the creation of buckets, service users, and Kubernetes secrets via new [Makefile targets](https://github.com/igor-baiborodine/insurance-hub/blob/3bab17d580e9baa5702d67715e60301bb749e33e/k8s/Makefile#L624):
+Provisioning the MinIO tenants required more than just creating buckets; I chose to strictly adhere to MinIO best practices to ensure security and scalability. This involved implementing purpose-driven naming conventions, granular bucket sharding, and enforcing the principle of least privilege through dedicated IAM policies. While these configurations can be managed via the MinIO Console UI, doing so manually across `local-dev` and `qa` environments is error-prone and inconsistent. To ensure deployments remained reproducible and "boring," I automated the creation of buckets, service users, and Kubernetes secrets via new [Makefile targets](https://github.com/igor-baiborodine/insurance-hub/blob/3bab17d580e9baa5702d67715e60301bb749e33e/k8s/Makefile#L624):
 
 * `minio-svc-bucket-create` — Provisions a purpose-specific bucket for a microservice.
 * `minio-svc-user-secret-create` — Generates the Opaque Kubernetes secret for service credentials.
@@ -116,9 +116,9 @@ Deployments remain reliable only when they are automated end-to-end. To automate
 * `docker-java-svc-all-build` – Builds Docker images for all Java services.
 * `docker-frontend-build` – Builds the Vue frontend image.
 
-To streamline service deployment across Kind (local-dev) and LXD/K3s (QA) environments, a dedicated set of Makefile targets was created for loading and unloading service images and orchestrating Kustomize deployments:
+To streamline service deployment across Kind (`local-dev`) and LXD/K3s (`qa`) environments, a dedicated set of Makefile targets was created for loading and unloading service images and orchestrating Kustomize deployments:
 
-* `svc-image-local-dev-load` – Loads a locally built image into the local-dev Kind cluster.
+* `svc-image-local-dev-load` – Loads a locally built image into the `local-dev` Kind cluster.
 * `svc-image-local-dev-unload` – Removes an image from Kind cluster nodes.
 * `svc-image-qa-load` – Loads an image into QA LXD cluster nodes.
 * `svc-deploy` – Deploys a service via Kustomize overlay.
@@ -126,23 +126,36 @@ To streamline service deployment across Kind (local-dev) and LXD/K3s (QA) enviro
 
 Implementing a multi-namespace architecture for the Insurance Hub—where infrastructure components like PostgreSQL and MinIO reside in `qa-data` while services occupy `qa-svc`—introduced a specific challenge: secret accessibility. During the infrastructure deployment phase, service-specific credentials, such as MinIO access keys or Postgres user secrets, are generated within the infrastructure’s own namespace to keep them local to the resource they protect. However, Kubernetes strictly enforces namespace boundaries, preventing a Deployment in `qa-svc` from directly mounting a Secret stored in `qa-data`. I had to decide whether to implement complex RBAC for cross-namespace ServiceAccount access or adopt a more pragmatic, portable solution.
 
-I chose to handle this by implementing "copy-on-create" or "copy-after-create" patterns within the project’s Make targets. As seen in the `minio-svc-user-secret-create` target, the process first creates the master secret in the infrastructure namespace and then immediately pipes the YAML through `sed` to reapply it to the service namespace. I opted for this approach because it maintains a simpler RBAC model and avoids the configuration complexity of cross-namespace secret references introduced in newer Kubernetes versions. This ensures the secret’s lifecycle remains under the service's deployment control while aligning with our existing Makefile automation patterns, providing a consistent and reproducible setup across all environments from `local-dev` to `qa`.
+To bypass namespace boundaries without complex RBAC, I implemented "copy-on-create" and "copy-after-create" patterns in the Make targets. For example, the `minio-svc-user-secret-create` target pipes the generated YAML through `sed` to re-apply it from `qa-data` to `qa-svc`. It is a portable, low-overhead solution for secret sharing.
 
 Before starting on implementing the deployment of the `agent-portal-gateway`, I established the migration sequence. The migration should start with core auth and edge, then move outward to lower‑risk or less-central services, wired via Kustomize overlays for `local-dev` and `qa`.
 
-| Sequence | Category                | Service                 | Description                                                                                 |
-|:---------|:------------------------|:------------------------|:--------------------------------------------------------------------------------------------|
-| 1        | **Gateway & Auth**      | `agent-portal-gateway`  | Single entry point to backend services; enables early routing smoke tests.                  |
-| 2        | **Gateway & Auth**      | `auth-service`          | Required for most flows; external clients depend on it.                                     |
-| 3        | **Gateway & Auth**      | `web-vue` (frontend)    | Validates the full browser → gateway → auth path once core edge/auth are stable.            |
-| 4        | **Supporting Services** | `document-service`      | Relatively isolated; not critical to core policy/payment flows.                             |
-| 5        | **Supporting Services** | `product-service`       | Provides reference data; used by others but off the main transaction path initially.        |
-| 6        | **Supporting Services** | `policy-search-service` | Read-only over Elasticsearch, no critical writes.                                           |
-| 7        | **Supporting Services** | `dashboard-service`     | Primarily read-heavy; safe once upstreams (policy/product/search) are in place.             |
-| 8        | **Supporting Services** | `chat-service`          | Can be validated independently (WebSocket + API).                                           |
-| 9        | **Core Transactional**  | `policy-service`        | Central domain logic; depends on product, document, and search.                             |
-| 10       | **Core Transactional**  | `payment-service`       | Financially critical; should follow a stable policy path and upstreams.                     |
-| 11       | **Core Transactional**  | `pricing-service`       | Critical but narrower; depends on product/policy and can be proven via internal APIs first. |
+**Gateway & Auth**
+
+| Sequence | Service                 | Description                                                                                 |
+|:---------|:------------------------|:--------------------------------------------------------------------------------------------|
+| 1        | `agent-portal-gateway`  | Single entry point to backend services; enables early routing smoke tests.                  |
+| 2        | `auth-service`          | Required for most flows; external clients depend on it.                                     |
+| 3        | `web-vue` (frontend)    | Validates the full browser → gateway → auth path once core edge/auth are stable.            |
+
+
+**Supporting Services**
+
+| Sequence | Service                 | Description                                                                                 |
+|:---------|:------------------------|:--------------------------------------------------------------------------------------------|
+| 4        | `document-service`      | Relatively isolated; not critical to core policy/payment flows.                             |
+| 5        | `product-service`       | Provides reference data; used by others but off the main transaction path initially.        |
+| 6        | `policy-search-service` | Read-only over Elasticsearch, no critical writes.                                           |
+| 7        | `dashboard-service`     | Primarily read-heavy; safe once upstreams (policy/product/search) are in place.             |
+| 8        | `chat-service`          | Can be validated independently (WebSocket + API).                                           |
+
+**Core Transactional**
+
+| Sequence | Service                 | Description                                                                                 |
+|:---------|:------------------------|:--------------------------------------------------------------------------------------------|
+| 9        | `policy-service`        | Central domain logic; depends on product, document, and search.                             |
+| 10       | `payment-service`       | Financially critical; should follow a stable policy path and upstreams.                     |
+| 11       | `pricing-service`       | Critical but narrower; depends on product/policy and can be proven via internal APIs first. |
 
 With the decommissioning of Consul, service discovery has transitioned to a Kubernetes-native model, leveraging the cluster's internal DNS (CoreDNS). In this architecture, manual registration is replaced by deterministic FQDNs following the standard `<service>.<namespace>.svc.cluster.local` pattern. This shift allows services to resolve their dependencies without an external agent; for instance, the `payment-service` in the `local-dev` environment now reaches its database at `local-dev-postgres-payment-rw.local-dev-all.svc.cluster.local` and its Kafka bootstrap server at `local-dev-kafka-kafka-bootstrap.local-dev-all.svc.cluster.local`.
 
@@ -178,15 +191,15 @@ Finally, I addressed a related UX issue by adding a map for `$connection_upgrade
 
 After moving the legacy Micronaut 2 `agent-portal-gateway` into the cluster, routing failures initially appeared to be a network-level issue. The `product-service` seemed unreachable from the gateway, even though direct in-cluster connectivity tests succeeded. This pattern eventually surfaced across all downstreams—document, policy, and policy-search. The clue was that while Kubernetes DNS worked, the gateway couldn't resolve logical service identifiers into actual URLs.
 
-The root cause lay in how Micronaut’s declarative HTTP clients—configured with `@Client(id = "<service-id>")`—behave. In Docker Compose, service discovery often "just happens" via hostnames, but in Micronaut 2, the `id` is a logical name that requires either a discovery client or an explicit URL mapping. I initially tested the Micronaut Kubernetes discovery client as a "cloud-native" solution, but it introduced immediate instability. The client attempted to watch cluster resources, such as ConfigMaps, but ran into RBAC restrictions, resulting in `Forbidden` errors that caused slow startups and probe timeouts—the opposite of the stability I needed for this phase.
+The root cause lay in how Micronaut’s declarative HTTP clients—configured with `@Client(id = "<service-id>")`—behave. In Docker Compose, service discovery often "just happens" via hostnames, but in Micronaut 2, the `id` is a logical name that requires either a discovery client or an explicit URL mapping.
 
-I chose a more pragmatic, "dumb-but-reliable" approach: explicit service URL mappings. I activated a dedicated Micronaut environment profile via `MICRONAUT_ENVIRONMENTS` in the gateway deployment and defined `micronaut.http.services` entries in the corresponding `application-<env>.yaml`. By mapping each client ID to its specific Kubernetes Service DNS address, I eliminated the need for discovery-side watchers and RBAC changes. This made routing deterministic across all downstream services and restored the gateway’s primary responsibility: simple, predictable HTTP forwarding.
+Initially, I tested the Micronaut Kubernetes discovery client. However, it required extensive RBAC permissions to watch cluster resources, introducing more complexity than it solved. I switched to explicit service URL mappings in `application-local.yaml` by defining `micronaut.http.services` entries along with activating a dedicated Micronaut environment profile via `MICRONAUT_ENVIRONMENTS` in the gateway deployment. It is a "dumb-but-reliable" approach that made routing deterministic without security overhead.
 
 #### Tuning JVM Footprint and DNS Fallbacks
 
-While validating services in the local dev Kind cluster, I observed an unsettling pattern: healthy pods would restart every 10–15 minutes. The deployments had modest memory limits—typically 512 MiB—but metrics showed the Java processes steadily climbing toward 1 GiB before being terminated. Kubernetes was performing routine OOM enforcement, but the "mystery" was why the memory usage was so aggressive.
+While validating services in the `local-dev` Kind cluster, I observed an unsettling pattern: healthy pods would restart every 10–15 minutes. The deployments had modest memory limits—typically 512 MiB—but metrics showed the Java processes steadily climbing toward 1 GiB before being terminated. Kubernetes was performing routine OOM enforcement, but the "mystery" was why the memory usage was so aggressive.
 
-I had fallen into a classic "lift-and-shift" trap: I reused the legacy Dockerfiles unchanged, running the JVM without container-aware guardrails. Using a plain `java -jar` allowed the JVM to size its heap based on the host's available memory rather than the pod's limits. I modernized the runtime by switching to the `eclipse-temurin:17-jre-alpine` base image and setting container-aware JVM options, specifically `-XX:+UseContainerSupport` and `-XX:MaxRAMPercentage`which immediatly stabilized memory consumption. As a bonus, the move to Temurin 17 significantly reduced idle footprint—dropping typical steady-state usage from roughly 300–350 MiB down to 150–200 MiB, which made the services far more compatible with “developer laptop” cluster constraints.
+I had fallen into a classic "lift-and-shift" trap: I reused the legacy Dockerfiles unchanged, running the JVM without container-aware guardrails. A plain `java -jar` command is dangerous in Kubernetes—it allows the JVM to size its heap based on host memory rather than pod limits. I modernized the runtime by switching to the `eclipse-temurin:17-jre-alpine` base image and setting container-aware JVM options, specifically `-XX:+UseContainerSupport` and `-XX:MaxRAMPercentage`which immediatly stabilized memory consumption. As a bonus, the move to Temurin 17 significantly reduced idle footprint—dropping typical steady-state usage from roughly 300–350 MiB down to 150–200 MiB, which made the services far more compatible with “developer laptop” cluster constraints.
 
 However, the Alpine-based Temurin 17 image wasn’t a universal win. For the `agent-portal-gateway` and `policy-service`, I noticed IPv6 fallback timeouts of 30–45 seconds on outbound calls. Alpine’s `musl libc` resolver tends to prefer IPv6 and only falls back to IPv4 after a timeout if the AAAA path isn't satisfied. In these specific cases, I chose to retain the older `adoptopenjdk/openjdk14:jre-14.0.2_12-alpine` base image. Its resolver behavior avoided the fallback delay and restored instant connectivity. The result was a service-by-service compromise: Temurin 17 for memory stability where possible, and the legacy base image where musl DNS behavior proved to be a latency trap.
 
