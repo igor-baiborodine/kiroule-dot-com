@@ -132,30 +132,29 @@ Before starting on implementing the deployment of the `agent-portal-gateway`, I 
 
 **Gateway & Auth**
 
-| Sequence | Service                 | Description                                                                                 |
-|:---------|:------------------------|:--------------------------------------------------------------------------------------------|
-| 1        | `agent-portal-gateway`  | Single entry point to backend services; enables early routing smoke tests.                  |
-| 2        | `auth-service`          | Required for most flows; external clients depend on it.                                     |
-| 3        | `web-vue` (frontend)    | Validates the full browser → gateway → auth path once core edge/auth are stable.            |
-
+| Seq. | Service                | Description                                                                      |
+|:-----|:-----------------------|:---------------------------------------------------------------------------------|
+| 1    | `agent-portal-gateway` | Single entry point to backend services; enables early routing smoke tests.       |
+| 2    | `auth-service`         | Required for most flows; external clients depend on it.                          |
+| 3    | `web-vue` (frontend)   | Validates the full browser → gateway → auth path once core edge/auth are stable. |
 
 **Supporting Services**
 
-| Sequence | Service                 | Description                                                                                 |
-|:---------|:------------------------|:--------------------------------------------------------------------------------------------|
-| 4        | `document-service`      | Relatively isolated; not critical to core policy/payment flows.                             |
-| 5        | `product-service`       | Provides reference data; used by others but off the main transaction path initially.        |
-| 6        | `policy-search-service` | Read-only over Elasticsearch, no critical writes.                                           |
-| 7        | `dashboard-service`     | Primarily read-heavy; safe once upstreams (policy/product/search) are in place.             |
-| 8        | `chat-service`          | Can be validated independently (WebSocket + API).                                           |
+| Seq. | Service                 | Description                                                                          |
+|:-----|:------------------------|:-------------------------------------------------------------------------------------|
+| 4    | `document-service`      | Relatively isolated; not critical to core policy/payment flows.                      |
+| 5    | `product-service`       | Provides reference data; used by others but off the main transaction path initially. |
+| 6    | `policy-search-service` | Read-only over Elasticsearch, no critical writes.                                    |
+| 7    | `dashboard-service`     | Primarily read-heavy; safe once upstreams (policy/product/search) are in place.      |
+| 8    | `chat-service`          | Can be validated independently (WebSocket + API).                                    |
 
 **Core Transactional**
 
-| Sequence | Service                 | Description                                                                                 |
-|:---------|:------------------------|:--------------------------------------------------------------------------------------------|
-| 9        | `policy-service`        | Central domain logic; depends on product, document, and search.                             |
-| 10       | `payment-service`       | Financially critical; should follow a stable policy path and upstreams.                     |
-| 11       | `pricing-service`       | Critical but narrower; depends on product/policy and can be proven via internal APIs first. |
+| Seq. | Service           | Description                                                                                 |
+|:-----|:------------------|:--------------------------------------------------------------------------------------------|
+| 9    | `policy-service`  | Central domain logic; depends on product, document, and search.                             |
+| 10   | `payment-service` | Financially critical; should follow a stable policy path and upstreams.                     |
+| 11   | `pricing-service` | Critical but narrower; depends on product/policy and can be proven via internal APIs first. |
 
 With the decommissioning of Consul, service discovery has transitioned to a Kubernetes-native model, leveraging the cluster's internal DNS (CoreDNS). In this architecture, manual registration is replaced by deterministic FQDNs following the standard `<service>.<namespace>.svc.cluster.local` pattern. This shift allows services to resolve their dependencies without an external agent; for instance, the `payment-service` in the `local-dev` environment now reaches its database at `local-dev-postgres-payment-rw.local-dev-all.svc.cluster.local` and its Kafka bootstrap server at `local-dev-kafka-kafka-bootstrap.local-dev-all.svc.cluster.local`.
 
