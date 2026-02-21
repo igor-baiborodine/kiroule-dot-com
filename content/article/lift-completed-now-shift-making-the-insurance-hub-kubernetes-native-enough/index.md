@@ -74,9 +74,9 @@ While Consul decommissioning was slated for a later phase, initial testing revea
 
 Provisioning the MinIO tenants required more than just creating buckets; I chose to strictly adhere to MinIO best practices to ensure security and scalability. This involved implementing purpose-driven naming conventions, granular bucket sharding, and enforcing the principle of least privilege through dedicated IAM policies. While these configurations can be managed via the MinIO Console UI, doing so manually across `local-dev` and `qa` environments is error-prone and inconsistent. To ensure deployments remained reproducible and "boring," I automated the creation of buckets, service users, and Kubernetes secrets via new [Makefile targets](https://github.com/igor-baiborodine/insurance-hub/blob/3bab17d580e9baa5702d67715e60301bb749e33e/k8s/Makefile#L624):
 
-* `minio-svc-bucket-create` — Provisions a purpose-specific bucket for a microservice.
-* `minio-svc-user-secret-create` — Generates the Opaque Kubernetes secret for service credentials.
-* `minio-svc-user-with-policy-create` — Creates the MinIO user and attaches the necessary S3 IAM policy.
+* `minio-svc-bucket-create` - Provisions a purpose-specific bucket for a microservice.
+* `minio-svc-user-secret-create` - Generates the Opaque Kubernetes secret for service credentials.
+* `minio-svc-user-with-policy-create` - Creates the MinIO user and attaches the necessary S3 IAM policy.
 
 In the Kotlin-based `documents-service`, I deliberately chose an architectural approach to avoid a database migration. To keep the `PolicyDocument` class unchanged, I adapted the `bytes` field to serve a dual purpose: storing raw PDF binary data for legacy records or storing the UTF-8 encoded MinIO object key for new documents. I encapsulated this logic in a new `PolicyDocumentService` that uses a regex-based pattern check to determine whether to return the database bytes directly or fetch the content from S3 via the `MinioClient`.
 
@@ -217,11 +217,11 @@ To tie the "shift" together, I transitioned from manual commands to a fully orch
 
 In the QA environment, I prioritized using LXD-based snapshot targets at critical milestones. By capturing the state of the cluster nodes after standing up the monitoring and infrastructure layers, I’ve facilitated a nearly "instant" rollback capability. This effectively makes the cluster disposable; if a service deployment or configuration experiment causes a deadlock, I can revert to a verified baseline in seconds rather than rebuilding the stack from zero. The automated deployment sequence now follows these primary targets:
 
-- `java-all-build` — Orchestrates the sequential build of all legacy Java services and their Docker images.
-- `cluster-qa-monitoring-deploy` — Provisions the production-like observability stack (Elasticsearch, Prometheus, Grafana, and Zipkin).
-- `qa-nodes-snapshot` — Captures a named recovery point of the cluster VMs for rapid recreation.
-- `cluster-infra-deploy` — Deploys the foundational infrastructure, including Kafka, PostgreSQL clusters, and MinIO tenants.
-- `cluster-svc-deploy` — Executes the final application rollout, automating image loading and Kustomize-based deployment.
+- `java-all-build` - Orchestrates the sequential build of all legacy Java services and their Docker images.
+- `cluster-qa-monitoring-deploy` - Provisions the production-like observability stack (Elasticsearch, Prometheus, Grafana, and Zipkin).
+- `qa-nodes-snapshot` - Captures a named recovery point of the cluster VMs for rapid recreation.
+- `cluster-infra-deploy` - Deploys the foundational infrastructure, including Kafka, PostgreSQL clusters, and MinIO tenants.
+- `cluster-svc-deploy` - Executes the final application rollout, automating image loading and Kustomize-based deployment.
 
 ### AI Implementation: Optimizing Service Recipes and Agent-Assisted Refactoring
 
