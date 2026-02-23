@@ -16,6 +16,7 @@ enableRobotsTXT = true
 DefaultContentLanguage = "en"
 
 [params]
+  siteWidth = "900px"
   # Custom CSS / JS modules that will be imported by the template.
   # Files are relative to the static/ directory or a URL.
   # Files are imported in the order they appear here, after
@@ -54,8 +55,8 @@ DefaultContentLanguage = "en"
     # if you want to use gravatar for the header image
     #gravatarEMail = "igor@kiroule.com"
 
-    # set an path to the image file you want to use | overwrites gravatar
-    customImage = "avatar.png"
+    # set a path to the image file you want to use | overwrites gravatar
+    customImage = "avatar-2025.png"
 
     # define the icon you want to use for the overlay for the customImage or gravatar.
     overlayIcon = "fa-home"

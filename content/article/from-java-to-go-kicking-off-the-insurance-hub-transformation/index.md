@@ -1,7 +1,7 @@
 ---
 title: "From Java to Go: Kicking Off the Insurance Hub Transformation" 
 date: 2025-07-28T17:00:00-04:00
-lastmod: 2025-11-25T17:00:00-04:00
+lastmod: 2026-02-06T08:00:00-04:00
 
 categories: [ "Java", "Go" , "Write-up" ]
 tags: [ "Java-to-Go" , "Software Migration", "Cloud-Native Go", "AI in Software Development" ]
@@ -28,7 +28,7 @@ the challenges and discoveries at every stage of this transformation.
 
 {{< toc >}}
 
-### Raison d'Être or What's My Motivation
+### Developer Growth: Stepping Beyond Java
 
 As a professional Java developer, I believe real growth comes from stepping outside your comfort
 zone. Learning another JVM language like Kotlin or Scala—even though both have their
@@ -47,7 +47,7 @@ tackle both legacy migrations and new projects with greater confidence. By embra
 just diversifying my skill set—I’m preparing deliberately for the future of software development and
 expanding how I create robust, scalable solutions.
 
-### Why Insurance Hub?
+### Project Selection: Selecting Migration Target
 
 Before turning my sights to Go, I briefly explored Python, but my progress never went beyond basic
 syntax and a few HackerRank challenges. With Go, I decided to take a different approach: no
@@ -104,7 +104,7 @@ This journey is truly a “dual-learning project”—blending technical growth 
 modernization. Having ported the code and mapped out my migration plan, I’m excited to share every
 useful lesson ahead. Let’s get started!
 
-### System Analysis Deep Dive
+### Current Architecture: Analyzing Java Foundation
 
 > **Disclaimer:** All subsequent analysis and migration decisions are made with these assumptions in
 > mind:
@@ -163,14 +163,14 @@ This transformation solves several significant concerns:
 For deeper details, see the
 full [System Overview and Migration Analysis](https://github.com/igor-baiborodine/insurance-hub/blob/main/docs/system-overview-and-migration-analysis.md).
 
-### Migration Strategy Overview
+### Transition Planning: Defining Phased Approach
 
 Migrating a real system isn’t about throwing out the old and starting from scratch—especially when
 business continuity is critical. The Insurance Hub follows a six-phase plan built on proven industry
 patterns to pace progress and manage risk. Each step builds on the last, ensuring both stability and
 learning at every stage.
 
-#### Why a Phased, Safe Migration?
+#### Why Phased, Safe Migration?
 
 Rather than a risky “big bang” rewrite, this migration takes two safe, iterative paths:
 
@@ -184,7 +184,7 @@ Rather than a risky “big bang” rewrite, this migration takes two safe, itera
   This minimizes disruption, allows stepwise validation, and supports rapid rollback if issues
   appear.
 
-#### The Six Phases at a Glance
+#### The Six Phases at Glance
 
 | **Phase**                                                                   | **Summary**                                                                                                                                                                                                                |
 |-----------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -203,7 +203,7 @@ unnecessary risk.
 Stay tuned: each phase will be explored in depth in upcoming posts, sharing technical lessons
 learned and real-world strategies for safe, sustainable system modernization.
 
-### Iterative Dev with GitHub Projects
+### Project Management: Organizing Workflow
 
 Managing a migration of this scale means staying organized beyond just code. I use 
 [**GitHub Projects**](https://docs.github.com/en/issues/planning-and-tracking-with-projects/learning-about-projects/about-projects)
@@ -220,7 +220,7 @@ big-picture overview, helping me adjust priorities as needed.
 It’s a light but powerful system for managing long-term, iterative work. Follow along on the 
 (currently empty) [Insurance Hub Migration Project on GitHub](https://github.com/users/igor-baiborodine/projects/8).
 
-### How AI Fits In
+### AI Integration: Accelerating Technical Research
 
 To boost my learning and productivity, I make strategic use of modern AI tools—with clear
 boundaries. My main goal is to master Go and its ecosystem, not to let AI write code for me or fall
@@ -262,7 +262,7 @@ serves as an open journal until I finish the migration and publish a dedicated p
 For a thoughtful look at the “vibe-coding” trend and its pitfalls,
 see [this analysis](https://blog.florianherrengt.com/vibe-coder-career-path.html).
 
-### Wrapping Up
+### Project Kick-off: Closing Thoughts
 
 The migration to Insurance Hub is more than just a technical change—it’s a hands-on opportunity to
 practice modern software craftsmanship. By stepping outside my Java comfort zone and embracing Go,

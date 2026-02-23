@@ -1,6 +1,7 @@
 ---
 title: "From Docker Compose to Kubernetes: Lifting the Insurance Hub into the Cloud"
 date: 2025-11-11T17:00:00-04:00
+lastmod: 2026-02-07T08:00:00-04:00
 
 categories: [ "Java", "Go" , "Write-up" ]
 tags: [ "Java-to-Go", "DevOps", "Kubernetes", "Observability", "Infrastructure as Code" ]
@@ -46,7 +47,7 @@ disruption while validating stable operation on our new Kubernetes infrastructur
 
 {{< toc >}}
 
-### Phase 1 Planning and Scoping
+### Project Backlog: Refining Migration Scope
 
 Before diving into Phase 1, a thorough review and adjustment of its scope were crucial for ensuring a
 smooth and effective migration. This involved extensive research into best practices for both local
@@ -69,7 +70,7 @@ necessary research—such as, for example, evaluating whether to use ArgoCD or F
 updating the "Dev Notes" section. This structured approach ensures clear communication, proper preparation, and
 prioritization, laying a strong foundation for executing the lift phase of our migration.
 
-### Provisioning Clusters
+### Cluster Provisioning: Establishing Local Dev and QA Environments
 
 Since the Kubernetes cluster forms the very foundation of this entire migration, I meticulously
 evaluated available tools and options to find a solution that balances resource efficiency with the
@@ -140,11 +141,12 @@ remaining lightweight enough for local development.
 My development machine is equipped with 24 logical CPUs (16 physical cores) and 64 GB of RAM. Recognizing
 that Kubernetes control plane components—such as the API server, scheduler, controller manager, and
 etcd—are resource-intensive, I allocated more CPU and memory to the master node. The resources were
-distributed as follows, dedicating half of the available machine’s resources to the future cluster:
+distributed as follows, dedicating a substantial portion of the host’s resources to the cluster to
+ensure stable overhead for the management plane and stateful workloads:
 
-- Master LXD VM: **6** CPU, **16** GiB RAM
-- Worker LXD VM 1: **3** CPU, **8** GiB RAM
-- Worker LXD VM 2: **3** CPU, **8** GiB RAM
+- Master LXD VM: **7** CPU, **16** GiB RAM, disk size **100** GiB
+- Worker LXD VM 1: **5** CPU, **12** GiB RAM, disk size **80** GiB
+- Worker LXD VM 2: **5** CPU, **12** GiB RAM, disk size **80** GiB
 
 Similar to the local development setup, I implemented a suite of [Makefile targets](https://github.com/igor-baiborodine/insurance-hub/blob/947f3e492e50e7efbcfa15762e6d54613be4ff85/k8s/bootstrap/Makefile#L65)
 to ensure consistent and reliable management of QA cluster operations:
@@ -183,7 +185,7 @@ section of the “Base Cluster How-To’s” guide. The cluster has been rigorou
 fully functional and ready to host workloads that require persistent storage and ingress routing from
 the outset. Detailed testing notes can be found in the ticket titled [“Phase 1: [1A] Provision local dev and QA Kubernetes clusters”](https://github.com/users/igor-baiborodine/projects/8/views/1?pane=issue&itemId=124053589&issue=igor-baiborodine%7Cinsurance-hub%7C6).
 
-### Kubernetes Deployment Strategy & Best Practices
+### Deployment Strategy: Adopting Operators and Kustomize
 
 The recommended deployment approach for the Insurance Hub leverages Kubernetes Operators in conjunction
 with Kustomize overlays for all infrastructure components, including PostgreSQL, MongoDB, Kafka,
@@ -245,7 +247,7 @@ This hybrid deployment strategy achieves several key objectives: automating infr
 simplifying resource customization, enhancing production-like isolation, and facilitating seamless
 upgrades and scaling as our environments evolve.
 
-### Deploying Core Observability Tools
+### Stack Observability: Implementing Metrics and Tracing
 
 #### Prometheus & Grafana
 
@@ -302,7 +304,7 @@ validation—including submitting traces through the HTTP API and verifying them
 to the ["Verify Zipkin Deployment and Tracing in QA"](https://github.com/igor-baiborodine/insurance-hub/blob/main/k8s/tests/infra/verify-zipkin-tracing.md)
 guide. This ensures trace functionality is robust and ready for legacy service migration.
 
-### Deploying Infrastructure Components
+### Data Infrastructure: Provisioning Stateful Services
 
 #### PostgreSQL
 
@@ -489,7 +491,7 @@ tasks—such as creating, listing, and deleting buckets using the [mc](https://g
 client—are described in the ["Verify MinIO Connectivity"](https://github.com/igor-baiborodine/insurance-hub/blob/main/k8s/tests/infra/verify-minio-connectivity.md)
 guide, ensuring MinIO tenants are production-ready for object storage operations.
 
-### Deploying Auxiliary Services
+### Legacy Support: Hosting Supplemental Services
 
 #### jsreport
 
@@ -518,7 +520,7 @@ validation—including UI access and PDF report generation—are covered in
 the ["Verify jsreport PDF Generation"](https://github.com/igor-baiborodine/insurance-hub/blob/main/k8s/tests/infra/verify-jsreport-pdf-generation.md)
 guide, ensuring jsreport remains production-ready while the migration proceeds.
 
-### Final Polishing & Validation
+### Platform Validation: Testing and Hardening Foundation
 
 Before finalizing major changes to the Insurance Hub infrastructure, I conducted a focused round of
 polishing and validation to ensure reliability and maintainability across both local and QA
@@ -539,7 +541,7 @@ clear, up-to-date operational guidance. With this solid foundation firmly in pla
 is now ready for the next stage of migration and the integration of additional cloud-native features
 and automation.
 
-### Leveraging AI Tools
+### AI Assistance: Engineering with Augmented Workflows
 
 In my previous article, I described [my approach](https://www.kiroule.com/article/from-java-to-go-kicking-off-the-insurance-hub-transformation/#how-ai-fits-in) 
 to AI tools as advanced research aids—something akin to
@@ -571,9 +573,9 @@ Here is how I effectively used AI tools during this step:
   test pods to ensure production readiness.
 
 My primary AI tools were JetBrains AI
-Assistant ([AI Pro plan](https://www.jetbrains.com/ai-ides/buy/?section=personal&billing=yearly), US
-$100/year) and Perplexity ([Perplexity Pro plan](https://www.perplexity.ai/enterprise/pricing), US
-$200/year). Comparing their usage limits highlights essential contrasts. Although Perplexity costs
+Assistant ([AI Pro plan](https://www.jetbrains.com/ai-ides/buy/?section=personal&billing=yearly), US $100/year) 
+and Perplexity ([Perplexity Pro plan](https://www.perplexity.ai/enterprise/pricing), US $200/year). 
+Comparing their usage limits highlights essential contrasts. Although Perplexity costs
 twice as much annually, its usage allowance is much more generous, enabling longer and more complex
 sessions without quickly hitting limits. JetBrains, on the other hand, starts with just 10 AI credits
 every 30 days, which are easily exhausted—especially when using resource-intensive models like Claude
@@ -588,7 +590,7 @@ necessitating even more cautious credit management. This contrasts sharply with 
 usage model, which better suits heavier or more exploratory AI interactions despite its higher price
 tag.
 
-### Wrapping Up
+### Lift Work: Closing Thoughts
 
 This article has covered the initial, critical portion of Phase 1 in the Insurance Hub migration
 journey: the "lift" phase. During this stage, my focus was squarely on migrating the entire legacy
