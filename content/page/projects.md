@@ -9,6 +9,13 @@ weight: 20
 
 {{< toc >}}
 
+### 2026
+
+##### Insurance Hub - Migration to Go
+
+Technologies used: [Go](https://github.com/golang/go), [gRPC](https://github.com/grpc/grpc-go), [PostgreSQL](https://www.postgresql.org/), [Goose](https://pressly.github.io/goose/), [Docker](https://www.docker.com/), [Kubernetes](https://kubernetes.io/)\
+[See GitHub repository](https://github.com/igor-baiborodine/insurance-hub)
+
 ### 2025
 
 ##### Insurance Hub - Migration to Go

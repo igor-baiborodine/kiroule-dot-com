@@ -11,6 +11,13 @@ link: ""
 target: "_blank"
 ---
 
+### 2026
+
+##### Kubernetes for Developers (LFD259)
+Issued by [Linux Foundation](https://www.linuxfoundation.org/)\
+Credential ID: LF-i1th4qoxnn\
+[See credential](https://www.credly.com/badges/1104e872-3b4a-48ab-95c0-bfd0b0c28b84/public_url)
+
 ### 2020
 ##### HackerRank Python (intermediate)
 Issued by [HackerRank](https://www.hackerrank.com/)\
