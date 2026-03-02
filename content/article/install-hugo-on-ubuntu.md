@@ -1,7 +1,7 @@
 ---
 title: "Install Hugo on Ubuntu"
 date: 2021-11-10T08:00:50-05:00
-lastmod: 2023-04-20T08:00:00-05:00
+lastmod: 2026-03-02T07:00:00-05:00
 
 categories: ["Jamstack", "How-to"]
 tags: ["Hugo", "Ubuntu"]
@@ -38,12 +38,12 @@ When you check the location of the binary with the `whereis hugo` command, it gi
 ### dpkg
 To install the latest version of Hugo or a specific one, you can use **dpkg**, the Debian package manager. 
 But first, you have to download the `.deb` package from the [official Hugo release page](https://github.com/gohugoio/hugo/releases). 
-For example, to install version `0.109.0`, use the following commands:
+For example, to install version `0.156.0`, use the following commands:
 ```shell
-wget https://github.com/gohugoio/hugo/releases/download/v0.109.0/hugo_0.109.0_linux-amd64.deb
-sudo dpkg -i hugo_0.109.0_linux-amd64.deb
+wget https://github.com/gohugoio/hugo/releases/download/v0.156.0/hugo_0.156.0_linux-amd64.deb
+sudo dpkg -i hugo_0.156.0_linux-amd64.deb
 ```
-If you need the extended version, replace `hugo_0.109.0_linux-amd64.deb` with `hugo_extended_0.109.0_linux-amd64.deb`.
+If you need the extended version, replace `hugo_0.156.0_linux-amd64.deb` with `hugo_extended_0.156.0_linux-amd64.deb`.
 
 The location of the binary will be `/usr/local/bin/hugo` when installed with `dpkg`.
 
