@@ -26,9 +26,9 @@ Before starting Phase 1, a thorough review of the project's scope revealed sever
 
 This distinction became critical during execution. The services were successfully deployed into Kind and K3s clusters, MinIO replaced local filesystems, PostgreSQL clusters managed data persistence, and Kustomize manifests ensured repeatable deployments. However, the operational model was still incomplete. Images still required manual builds and tagging, manifests needed explicit version updates after each release, and the cluster state relied on orchestrated Make targets instead of repository reconciliation. Without GitHub Actions, Flux, GitHub Packages, and GHCR, Phase 1 would have concluded with a functional system that was not yet fully production-ready—it could run but not reliably release itself.
 
-The goal of achieving operational completeness was specifically focused on the production-like QA environment that was running on K3s. For the local development Kind cluster, the manual push model was intentionally maintained. This approach, which involved building images locally, loading them directly into Kind nodes, and applying Kustomize overlays via Make targets, aligned better with the developer workflow and the immediate feedback needed during active coding and testing.
-
 This gap became even more apparent in light of the upcoming Strangler Fig migration. With the need for Java and Go versions to coexist through separate Kustomize bases and overlays, manual coordination would quickly become unmanageable. Therefore, automated workflows for modular releases, dependency updates across the monorepo, and Flux reconciliation from Git had shifted from being optimizations to essential requirements, ensuring that the platform was self-consistent and scalable from Phase 1 onward.
+
+The goal of achieving operational completeness was specifically focused on the production-like QA environment that was running on K3s. For the local development Kind cluster, the manual push model was intentionally maintained. This approach, which involved building images locally, loading them directly into Kind nodes, and applying Kustomize overlays via Make targets, aligned better with the developer workflow and the immediate feedback needed during active coding and testing.
 
 ### Section 2
 
