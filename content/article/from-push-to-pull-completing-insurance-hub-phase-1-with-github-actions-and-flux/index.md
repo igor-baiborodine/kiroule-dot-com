@@ -20,7 +20,15 @@ This article addresses the final component of Phase 1, focusing on the CI/CD and
 
 {{< toc >}}
 
-### Section 1
+### Why GitOps Belongs in Phase 1
+
+Before diving into Phase 1, a thorough scope review surfaced several gaps that needed to be addressed upfront. Observability had to extend beyond just Insurance Hub services to cover the underlying infrastructure, Zipkin and JSReports were missing entirely from the deployment plan, and GitOps integration could no longer wait until Phase 6. The decision to move CI/CD and GitOps into Phase 1 was straightforward: the lift and shift work was delivering a Kubernetes runtime, but without a declarative delivery path, the platform would never reach true operational completeness.
+
+That distinction proved critical during execution. The services were successfully deployed into Kind and K3s clusters, MinIO replaced local filesystems, PostgreSQL clusters handled persistence, and Kustomize manifests made deployments repeatable. Yet the operational model remained incomplete. Images still required manual builds and tags, manifests needed explicit version updates after each release, and the cluster state depended on orchestrated Make targets rather than repository reconciliation. Without GitHub Actions, Flux, GitHub Packages, and GHCR, Phase 1 would have ended with a functional system that was not yet 100% production-ready—capable of running, but not of releasing itself consistently.
+
+This operational completeness was targeted specifically at the production-like QA environment running on K3s. For the local-dev Kind cluster, the manual push model was deliberately retained. The fast iteration cycle—building images locally, loading them directly into Kind nodes, and applying Kustomize overlays via Make targets—better suits the developer workflow and immediate feedback needs during active coding and testing.
+
+This gap became even more apparent as the future Strangler Fig migration. With Java and Go versions needing to coexist through separate Kustomize bases and overlays, manual coordination would have quickly become untenable. Automated workflows for modular releases, dependency bumping across the monorepo, and Flux reconciliation from Git were no longer optimizations, but structural requirements to make the platform self-consistent and scalable from Phase 1 forward.
 
 ### Section 2
 
