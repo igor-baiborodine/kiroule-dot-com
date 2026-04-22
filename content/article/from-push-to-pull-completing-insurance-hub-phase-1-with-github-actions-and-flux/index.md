@@ -36,14 +36,10 @@ Transitioning from a manual “push” model to a GitOps-driven pipeline require
 
 Specifically, the platform needed to satisfy five core requirements:
 
-- **Automated PR Validation**: Every change, whether to a shared Java API module or a future Go service, must receive immediate feedback through automated testing.
-
-- **Modular Release Flows**: It required independent pipelines for APIs, shared libraries (such as our command bus), and deployable services. This was critical because some APIs depend on others, and I wanted to avoid triggering a re-release of the Core Policy service due to a change in the Web module.
-
+- **Automated PR Validation**: Every change, whether to a shared Java API module or a future Go service, must receive immediate feedback through linting and automated testing to catch regressions and style drift early.
+- **Modular Release Flows**: I needed to establish independent pipelines for APIs, shared libraries, and services to manage the monorepo's dependency graph. This modularity ensures that a release of a shared module triggers updates only for its direct downstream consumers, preventing localized changes from causing an uncontrolled, full-stack re-release cycle.
 - **Scalable Versioning**: The versioning strategy needed to be compatible with a monorepo and forward-compatible, ensuring that the eventual Java-to-Go migration would not disrupt our artifact history.
-
 - **Unified Artifact Management**: A centralized location was necessary for publishing both JAR files for shared modules and container images for workloads.
-
 - **Declarative Reconciliation**: Finally, the QA cluster state needed to be continuously reconciled with the repository.
 
 Since the source code is hosted on GitHub, I chose to leverage the GitHub ecosystem extensively. Utilizing GitHub Actions (GHA) for continuous integration, along with GitHub Packages and the GitHub Container Registry (GHCR), was a practical choice that minimized integration friction. By keeping the delivery logic close to the code, I eliminated the need for external authentication and benefited from GHA's native support for monorepo-style path filtering. Additionally, using GHCR as our OCI-compliant registry provided a unified view of our images, which was essential for tracking the coexistence of legacy Java and future Go workloads.
