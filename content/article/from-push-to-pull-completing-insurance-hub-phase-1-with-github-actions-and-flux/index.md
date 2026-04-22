@@ -32,18 +32,23 @@ For the local development Kind cluster, I intentionally maintained the manual pu
 
 ### Architecting the Delivery Path: From Requirements to Reconciliation
 
-Transitioning from a manual "push" model to a GitOps-driven pipeline required a clear definition of what a "complete" delivery platform actually meant for a monorepo. Having spent most of my career outside the context of large-scale monorepos, I found it challenging to first establish the goals and then select the tooling that wouldn't collapse under the weight of cross-module dependencies. I needed a platform that didn't just move bytes, but enforced the discipline I had established during the manual "shift" phase.
+Transitioning from a manual “push” model to a GitOps-driven pipeline required a clear definition of what a “complete” delivery platform meant for a monorepo. Having spent most of my career outside the context of large-scale monorepos, I found it challenging to establish the objectives and select the right tools that could handle the complexities of cross-module dependencies. I needed a platform that did not just automate the path to production but also enforced the operational discipline I had established during the manual “shift” phase.
 
 Specifically, the platform needed to satisfy five core requirements:
-- **Automated PR Validation**: Every change, whether to a shared Java API module or a future Go service, needed immediate feedback through automated testing.
-- **Modular Release Flows**: It required independent pipelines for APIs, shared libraries (like our command-bus), and deployable services. This was critical because some APIs depend on others, and I didn't want a change in the Web module to trigger a re-release of the Core Policy service.
-- **Scalable Versioning**: The versioning strategy needed to be monorepo-friendly and forward-compatible, ensuring the Java-to-Go migration in later phases wouldn't break our artifact history.
-- **Unified Artifact Management**: A centralized location for publishing both JARs for shared modules and container images for workloads.
-- **Declarative Reconciliation**: As the final step, the QA cluster state needed to be continuously reconciled against the repository.
 
-Given that the source code is hosted on GitHub, I chose to lean heavily into the GitHub ecosystem. Utilizing GitHub Actions (GHA) for CI, alongside GitHub Packages and GitHub Container Registry (GHCR), was a pragmatic choice that minimized integration friction. By keeping the delivery logic close to the code, I eliminated the need for external authentication overhead and benefited from the native support for monorepo-style path filtering in GHA. Furthermore, using GHCR as our OCI-compliant registry provided a unified view of our images, which was essential for tracking the coexistence of legacy Java and future Go workloads.
+- **Automated PR Validation**: Every change, whether to a shared Java API module or a future Go service, must receive immediate feedback through automated testing.
 
-For the GitOps reconciliation layer—specifically for the production-like QA environment—I selected Flux CD. Initially, I weighed the trade-offs between Flux and Argo CD. While Argo CD offers a rich UI and sophisticated image automation, I ultimately settled on Flux because I prioritized a "Git-centric" approach that felt more lightweight and integrated naturally with Kustomize. Flux’s source controller and Kustomize controller allowed me to treat my manifests as the single source of truth without the heavy scaffolding or management UI that Argo requires. Since I was already managing my environment through structured Kustomize overlays, Flux felt like a natural extension of my existing workflow rather than an additional layer of complexity to manage.
+- **Modular Release Flows**: It required independent pipelines for APIs, shared libraries (such as our command bus), and deployable services. This was critical because some APIs depend on others, and I wanted to avoid triggering a re-release of the Core Policy service due to a change in the Web module.
+
+- **Scalable Versioning**: The versioning strategy needed to be compatible with a monorepo and forward-compatible, ensuring that the eventual Java-to-Go migration would not disrupt our artifact history.
+
+- **Unified Artifact Management**: A centralized location was necessary for publishing both JAR files for shared modules and container images for workloads.
+
+- **Declarative Reconciliation**: Finally, the QA cluster state needed to be continuously reconciled with the repository.
+
+Since the source code is hosted on GitHub, I chose to leverage the GitHub ecosystem extensively. Utilizing GitHub Actions (GHA) for continuous integration, along with GitHub Packages and the GitHub Container Registry (GHCR), was a practical choice that minimized integration friction. By keeping the delivery logic close to the code, I eliminated the need for external authentication and benefited from GHA's native support for monorepo-style path filtering. Additionally, using GHCR as our OCI-compliant registry provided a unified view of our images, which was essential for tracking the coexistence of legacy Java and future Go workloads.
+
+For the GitOps reconciliation layer—specifically for the production-like QA environment—I selected Flux CD. Initially, I considered the trade-offs between Flux and Argo CD. While Argo CD offers a rich user interface and sophisticated image automation, I ultimately chose Flux due to its "Git-centric" approach, which felt more lightweight and integrated seamlessly with Kustomize. Flux’s source controller and Kustomize controller allowed me to treat my manifests as the single source of truth, without the heavy scaffolding or management UI required by Argo. Since I was already managing my environment through structured Kustomize overlays, choosing Flux felt like a natural extension of my existing workflow rather than an additional layer of complexity to manage.
 
 ### Section 3
 
