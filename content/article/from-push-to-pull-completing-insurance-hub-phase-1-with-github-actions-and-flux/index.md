@@ -10,11 +10,11 @@ series: [ "Insurance Hub: The Way to Go" ]
 author: "Igor Baiborodine" 
 ---
 
-The previous [article](/article/lift-completed-now-shift-making-the-insurance-hub-kubernetes-native-enough/) concluded with the system successfully running in Kubernetes, though it still relied on a manual deployment model. While validating the cluster foundation and service manifests was a significant milestone, it also exposed a lingering operational gap. I had successfully migrated the platform to Kubernetes, yet the delivery process remained manual—a compromise that prevented the system from truly embodying a cloud-native workload.
+The previous [article](/article/lift-completed-now-shift-making-the-insurance-hub-kubernetes-native-enough/) concluded with the system successfully running on Kubernetes, yet it still relied on a manual deployment model. While validating the cluster foundation and service manifests was a significant milestone, it also revealed a lingering operational gap. I had migrated the platform to Kubernetes, but the delivery process remained manual—a compromise that prevented the system from fully embodying a cloud-native workload.
 
 <!--more-->
 
-This distinction is more critical than it initially appears. Kubernetes provides declarative runtime primitives, service discovery, and repeatable scheduling, but it does not inherently make the release process declarative. At this stage, I still needed to build, version, and publish images explicitly. Manifests required manual updates after every release. Although the cluster was configured to run the services, I felt the process for deploying those workloads was still too manual to be considered complete.
+This distinction is more critical than it might seem at first. Kubernetes offers declarative runtime primitives, service discovery, and repeatable scheduling, but it does not inherently make the release process declarative. At this point, I still needed to build, version, and publish images explicitly. Additionally, manifests required manual updates after every release. Although the cluster was configured to run the services, I felt that the process for deploying those workloads was still too manual to be considered complete.
 
 This article addresses the final component of Phase 1, focusing on the CI/CD and GitOps work that I had postponed until now. I will utilize GitHub Actions for modular release workflows, GitHub Packages and GHCR for artifact publication, and Flux for cluster reconciliation based on the repository state.
 
