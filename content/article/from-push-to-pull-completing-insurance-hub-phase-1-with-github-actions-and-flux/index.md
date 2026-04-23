@@ -46,7 +46,118 @@ Since the source code is hosted on GitHub, I chose to leverage the GitHub ecosys
 
 For the GitOps reconciliation layer—specifically for the production-like QA environment—I selected [Flux CD](https://fluxcd.io). Initially, I considered the trade-offs between Flux and [Argo CD](https://argoproj.github.io/cd/). While Argo CD offers a rich user interface and sophisticated image automation, I ultimately chose Flux due to its "Git-centric" approach, which felt more lightweight and integrated seamlessly with Kustomize. Flux’s source controller and Kustomize controller allowed me to treat my manifests as the single source of truth, without the heavy scaffolding or management UI required by Argo. Since I was already managing my environment through structured Kustomize overlays, choosing Flux felt like a natural extension of my existing workflow rather than an additional layer of complexity to manage.
 
-### Section 3
+## 3. Designing CI for a modular monorepo
+
+#### 3.1 Independent versioning inside `legacy/`
+
+- Why one release train would be too coarse
+- Why monotag fits the module structure
+
+#### 3.2 Pull request guardrails
+
+- Build validation for legacy changes
+- Why a one-module-per-PR rule matters for version integrity and release safety
+
+#### 3.3 Artifact-type-specific workflows
+
+- API modules publish Maven artifacts
+- Services publish OCI images
+- Frontend publishes its own image
+- SemVer + short SHA for traceability
+
+#### 3.4 Automated downstream version bumps
+
+- Why shared API modules require automatic consumer updates
+- Why this matters in a dependency-heavy legacy codebase
+
+### 4. GitOps in QA: keeping Flux focused on reconciliation
+
+- Describe the bootstrap of Flux for QA
+- Explain GitRepository + Kustomization loop
+- Clarify that Flux is used only for cluster reconciliation
+- CI updates manifests in Git; Flux applies what Git declares
+- Explain why image automation was intentionally left out
+- Include Mermaid diagram ideas:
+    - API release flow
+    - service release flow
+    - Flux reconciliation loop
+
+### 5. The first release was not just a deployment — it was a dependency exercise
+
+- Explain why the initial release had prerequisites
+- Tie release order to the module dependency summary and diagram
+- Explain API/service separation and why it shaped the rollout
+- Walk through the practical order:
+    - shared APIs first
+    - dependent services after
+    - gateway after dependent APIs stabilize
+- Show that the first release validated both automation and architecture
+
+### 6. What I deliberately did not automate yet
+
+- No Flux image automation
+- No overly clever multi-loop delivery
+- No premature promotion orchestration
+- QA-first scope
+- Why keeping the system explicit was the right trade-off for Phase 1
+
+### 7. Using AI as an implementation accelerator
+
+- AI for workflow scaffolding, diagram drafting, and validation
+- AI for researching GitHub Actions and Flux patterns
+- AI helped reduce boilerplate and iteration time
+- Architecture and final decisions stayed human-driven
+
+### 8. Phase 1 is now actually complete
+
+- Re-state what Phase 1 now includes:
+    - clusters
+    - infrastructure
+    - Kubernetes-ready services
+    - delivery automation
+    - Git-driven reconciliation
+- Explain how this reduces operational risk for later phases
+- Tease the next stage:
+    - foundational observability maturation
+    - and, ultimately, per-service Go migration
+
+---
+
+### What Mermaid diagrams would add the most value
+
+Should be kept to **three diagrams max**.
+
+#### 1. API release workflow
+
+Show:
+
+- API module change
+- GitHub Actions release
+- Maven artifact publish
+- dependent version bump commit
+- downstream services consume new version
+
+This is probably the most distinctive technical story in the article.
+
+### 2. Service/web release workflow
+
+Show:
+
+- module change
+- workflow run
+- image build
+- push to GHCR
+- manifest update in Git
+- Flux reconcile to QA
+
+### 3. Flux reconciliation loop
+
+Show:
+
+- Git repository as desired state
+- Flux source fetch
+- Kustomization reconcile
+- QA cluster state convergence
 
 Continue reading the series ["Insurance Hub: The Way to Go"](/series/insurance-hub-the-way-to-go/):
 {{< series "Insurance Hub: The Way to Go" >}}
