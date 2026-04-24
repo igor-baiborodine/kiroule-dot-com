@@ -78,9 +78,7 @@ Additionally, I established structural guardrails to separate internal library l
 
 ### GitOps in QA: Keeping Flux Focused on Reconciliation
 
-While the "shift" phase successfully validated our services as functional Kubernetes workloads, the deployment model remained anchored in a manual "push" loop. Relying on an orchestrated series of Make targets to build, load, and apply manifests was a necessary intermediate step, but it fell short of the operational maturity I envisioned for Phase 1. To close this gap, I introduced [Flux CD](https://fluxcd.io) to manage the QA environment. This transition marks the move from an operator-driven push to a declarative pull model, where the Git repository serves as the definitive source of truth for the cluster state.
-
-The bootstrap process for Flux was straightforward. Using the `flux-bootstrap` target, I connected the QA K3s cluster to the Insurance Hub GitHub repository. This created the `flux-system` namespace and established the initial reconciliation loop. I configured a `GitRepository` source to track the `main` branch and a `Kustomization` resource to apply the overlays found in `k8s/flux/qa`. Initially, I considered using Flux’s image automation features to automatically update manifests when new OCI images are pushed to GHCR. However, after evaluating the trade-off between automation and visibility, I chose to leave image automation out. For this phase, I prefer an explicit manifest update in Git—driven by our CI workflows—to ensure that every change in the cluster is traceable to a specific commit.
+While the "shift" phase successfully validated our services as functional Kubernetes workloads, the deployment model remained anchored in a manual "push" loop. Relying on an orchestrated series of Make targets to build, load, and apply manifests was a necessary intermediate step, but it fell short of the operational maturity I envisioned for Phase 1. To close this gap, I introduced [Flux CD](https://fluxcd.io) to manage the QA environment. This transition marks the move from an operator-driven push—where I, as the human operator, had to manually trigger the delivery of manifests from my local machine—to a declarative pull model. In this new state, the cluster itself is responsible for fetching and applying changes, ensuring the Git repository serves as the definitive source of truth for the cluster state.
 
 In this architecture, Flux is strictly focused on cluster reconciliation. It does not "decide" when to release; instead, it ensures that the cluster state matches what is declared in Git. The division of labor is clear: GitHub Actions handles the complexity of building artifacts and updating the manifest versions, while Flux acts as the reliable heartbeat that pulls those changes into the environment. This separation keeps our delivery pipeline "boring" and predictable—Flux doesn't need to know about Maven dependencies or OCI tagging strategies; it simply observes the repository and reconciles the diff.
 
@@ -92,7 +90,7 @@ In this architecture, Flux is strictly focused on cluster reconciliation. It doe
 </details> 
 &nbsp;
 
-To support this GitOps workflow and maintain the reproducibility established in earlier phases, I added several Flux-specific management targets to the root `k8s/Makefile`:
+To support this GitOps workflow and maintain the reproducibility established in earlier phases, I added several Flux-specific management targets to the `k8s/Makefile`:
 
 - `flux-bootstrap` – Installs Flux components and connects the cluster to GitHub.
 - `flux-reconcile` – Triggers an immediate pull and application of the latest Git state.
