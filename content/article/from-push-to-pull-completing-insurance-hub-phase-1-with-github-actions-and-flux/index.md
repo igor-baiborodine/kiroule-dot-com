@@ -90,7 +90,9 @@ In this architecture, Flux is focused solely on cluster reconciliation. It does 
 </details> 
 &nbsp;
 
-To support this GitOps workflow and maintain the reproducibility established in earlier phases, I added several Flux-specific management targets to the `k8s/Makefile`:
+To support this GitOps workflow and maintain the reproducibility established in earlier phases, I
+added several Flux-specific management [targets](https://github.com/igor-baiborodine/insurance-hub/blob/58679463b87cb2165002dd3b18099fc4dee6ab8d/k8s/Makefile#L228) 
+to the `k8s/Makefile`:
 
 - `flux-bootstrap` – Installs Flux components and connects the cluster to GitHub.
 - `flux-reconcile` – Triggers an immediate pull and application of the latest Git state.
