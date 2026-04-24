@@ -3,7 +3,7 @@ title: "From Push to Pull: Completing Insurance Hub Phase 1 with GitHub Actions 
 date: 2026-04-20T08:00:00-04:00
 
 categories: [ "Java", "Go" , "Write-up" ]
-tags: [ "Java-to-Go", "Kubernetes", "GitOps", "CICD", "Flux", "GitHub Actions", "Docker" ]
+tags: [ "Java-to-Go", "Monorepo", "Kubernetes", "GitOps", "CICD", "Flux", "GitHub Actions", "Docker" ]
 toc: false
 series: [ "Insurance Hub: The Way to Go" ]
 
@@ -46,29 +46,35 @@ Since the source code is hosted on GitHub, I chose to leverage the GitHub ecosys
 
 For the GitOps reconciliation layer—specifically for the production-like QA environment—I selected [Flux CD](https://fluxcd.io). Initially, I considered the trade-offs between Flux and [Argo CD](https://argoproj.github.io/cd/). While Argo CD offers a rich user interface and sophisticated image automation, I ultimately chose Flux due to its "Git-centric" approach, which felt more lightweight and integrated seamlessly with Kustomize. Flux’s source controller and Kustomize controller allowed me to treat my manifests as the single source of truth, without the heavy scaffolding or management UI required by Argo. Since I was already managing my environment through structured Kustomize overlays, choosing Flux felt like a natural extension of my existing workflow rather than an additional layer of complexity to manage.
 
-## 3. Designing CI for a modular monorepo
+### CI/CD: Orchestrating Modular Release
 
-#### 3.1 Independent versioning inside `legacy/`
+Before proceeding with the implementation of our CI/CD workflows, I gave careful thought to the underlying automation strategy. The Insurance Hub is a Maven monorepo where modules share a common Git history and depend on each other through internal APIs. This structure introduced three principal challenges: establishing a versioning strategy that works for both Java and future Go services, defining safety guardrails for inter-service dependency updates, and implementing automated version bumping driven by the commit history.
 
-- Why one release train would be too coarse
-- Why monotag fits the module structure
+#### Module Versioning: Decoupling Release Cycle
 
-#### 3.2 Pull request guardrails
+I evaluated two primary versioning strategies to manage our modular monorepo: a **global repository version** and **independent per-service versioning**. Initially, the global "release train" approach appeared attractive due to its simple mental model—the entire platform would move from version `1.3.0` to `1.4.0` as a single unit. This model simplifies coordination for tightly coupled modules and keeps pipelines straightforward by eliminating a complex versioning matrix. However, it quickly became clear that this coarse-grained approach would introduce significant operational noise. Frequent, localized changes to a small service would force a version bump across the entire stack, making it difficult to reason about what had actually changed and triggering unnecessary builds for stable components.
 
-- Build validation for legacy changes
-- Why a one-module-per-PR rule matters for version integrity and release safety
+I chose to implement independent semantic versioning for each module. This is a strategic choice that aligns with the Go module ecosystem’s requirements for monorepos. In Go, a single repository containing multiple modules must use prefixed tags—such as `legacy/pricing-service-api/v1.2.3`—for the toolchain to correctly resolve sub-directories as dependencies. By adopting this pattern now for our Java APIs, I am building the exact infrastructure and CI/CD habits required for a seamless Go migration later.
 
-#### 3.3 Artifact-type-specific workflows
+This approach also enforces independent service lifecycles, a core principle of the microservices architecture we are pursuing. Independent versioning ensures that consumers of the `product-service-api`, for example, are not forced to ingest updates they don’t need, effectively decoupling release cycles and reducing the risk of a "distributed monolith." From a technical safety perspective, it eliminates race conditions in GitHub Actions; since each matrix job manages a unique, module-specific tag, multiple APIs can be built, tagged, and released in parallel without ever conflicting over the same Git reference.
 
-- API modules publish Maven artifacts
-- Services publish OCI images
-- Frontend publishes its own image
-- SemVer + short SHA for traceability
+To maintain clarity between project eras, I restricted legacy Java API versions to the `1.x.x` range, reserving `2.0.0+` for future Go-based services. I also chose to keep the Maven `pom.xml` versions at a static `1.0.0-SNAPSHOT` for legacy modules. This sets a baseline while placing the burden of truth on Git tags, which serve as the only reliable indicator of what code is actually running in production.
 
-#### 3.4 Automated downstream version bumps
+#### Artifact Tagging: Balancing Traceability and Immutability
 
-- Why shared API modules require automatic consumer updates
-- Why this matters in a dependency-heavy legacy codebase
+The versioning approach for container images needed to be both monorepo-friendly and forward-compatible. It required a strategy that balanced human-readable release history with the technical immutability necessary for reliable Kubernetes deployments. During the research phase, I evaluated several tagging strategies to find a balance between readability and absolute technical traceability.
+
+Initially, I considered a simple SemVer-only approach to keep the image registry organized. However, while SemVer is excellent for tracking the evolution of a module, it lacks the cryptographic certainty needed to link a running binary back to a specific Git commit. If a tag were accidentally overwritten—a common risk during manual interventions—the link between source code and cluster state would be broken.
+
+To mitigate this, I implemented a dual-tagging strategy that applies both a SemVer tag and a short Git SHA to every build. The SemVer tag provides the human-friendly timeline needed for release management, while the SHA tag acts as an immutable anchor. After testing this approach against our modular workflows, I chose to adopt it despite the minor trade-off of increased registry bloat. In my view, the benefit of having an absolute mapping between a container in GHCR and a commit in Git outweighs the overhead of managing a more aggressive image retention policy.
+
+#### Guardrails: Managing Dependency Propagation
+
+To manage the intricate web of inter-API and service dependencies, I implemented a strict “single-module-per-release” guardrail. This restriction ensures that every GitHub Action run focuses on a unique domain or service update, preventing the risks associated with partial failures or "mixed" version releases. By enforcing this atomic approach, I can guarantee that each scoped Git tag remains a precise point-in-time reference for a specific component’s lifecycle.
+
+Recognizing that `policy-service-api` serves as a critical foundation for the entire landscape, I chose an active propagation strategy to prevent dependency drift. When an API release is finalized, a specialized “update-dependents” job automatically scans the repository for consumer modules and bumps their `pom.xml` versions. This change is committed back to the main branch, which in turn triggers a chained release of the dependent services, ensuring the system remains synchronized against the latest contracts.
+
+Finally, I applied structural guardrails to separate internal library logic from deployable artifacts. While infrastructure modules like `command-bus` or any other service API module are published strictly as JAR files to GitHub Packages, business services bypass this step to build OCI-compliant Docker images directly for GHCR. I also adopted the **Conventional Commits** standard to drive this logic. Enforcing prefixes like `chore(k8s)` or `feat(svc)` allows the CI to automate versioning and provides a machine-readable audit trail of why a specific deployment changed. This ensures our deployment history remains fully auditable and anchored in the repository as the sole source of truth.
 
 ### 4. GitOps in QA: keeping Flux focused on reconciliation
 
