@@ -76,17 +76,29 @@ Recognizing that the `policy-service-api` is a critical foundation for the entir
 
 Additionally, I established structural guardrails to separate internal library logic from deployable artifacts. Infrastructure modules, such as `command-bus` and other service API modules, are published strictly as JAR files to GitHub Packages. In contrast, business services directly build OCI-compliant Docker images for the GitHub Container Registry (GHCR) without going through this step. I also adopted the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) standard to streamline this logic. By enforcing prefixes like `chore(k8s)` or `feat(svc)`, I enable the continuous integration process to automate versioning and provide a machine-readable audit trail explaining why a specific deployment changed. This ensures that our deployment history remains fully auditable and anchored in the repository as the sole source of truth.
 
-### 4. GitOps in QA: keeping Flux focused on reconciliation
+### GitOps in QA: Keeping Flux Focused on Reconciliation
 
-- Describe the bootstrap of Flux for QA
-- Explain GitRepository + Kustomization loop
-- Clarify that Flux is used only for cluster reconciliation
-- CI updates manifests in Git; Flux applies what Git declares
-- Explain why image automation was intentionally left out
-- Include Mermaid diagram ideas:
-    - API release flow
-    - service release flow
-    - Flux reconciliation loop
+While the "shift" phase successfully validated our services as functional Kubernetes workloads, the deployment model remained anchored in a manual "push" loop. Relying on an orchestrated series of Make targets to build, load, and apply manifests was a necessary intermediate step, but it fell short of the operational maturity I envisioned for Phase 1. To close this gap, I introduced [Flux CD](https://fluxcd.io) to manage the QA environment. This transition marks the move from an operator-driven push to a declarative pull model, where the Git repository serves as the definitive source of truth for the cluster state.
+
+The bootstrap process for Flux was straightforward. Using the `flux-bootstrap` target, I connected the QA K3s cluster to the Insurance Hub GitHub repository. This created the `flux-system` namespace and established the initial reconciliation loop. I configured a `GitRepository` source to track the `main` branch and a `Kustomization` resource to apply the overlays found in `k8s/flux/qa`. Initially, I considered using Flux’s image automation features to automatically update manifests when new OCI images are pushed to GHCR. However, after evaluating the trade-off between automation and visibility, I chose to leave image automation out. For this phase, I prefer an explicit manifest update in Git—driven by our CI workflows—to ensure that every change in the cluster is traceable to a specific commit.
+
+In this architecture, Flux is strictly focused on cluster reconciliation. It does not "decide" when to release; instead, it ensures that the cluster state matches what is declared in Git. The division of labor is clear: GitHub Actions handles the complexity of building artifacts and updating the manifest versions, while Flux acts as the reliable heartbeat that pulls those changes into the environment. This separation keeps our delivery pipeline "boring" and predictable—Flux doesn't need to know about Maven dependencies or OCI tagging strategies; it simply observes the repository and reconciles the diff.
+
+<details>
+  <summary><b>GitOps Workflow: Flux Reconciliation Loop</b></summary>
+
+![Flux Reconciliation Diagram](flux-reconciliation-diagram.png)
+
+</details> 
+&nbsp;
+
+To support this GitOps workflow and maintain the reproducibility established in earlier phases, I added several Flux-specific management targets to the root `k8s/Makefile`:
+
+- `flux-bootstrap` – Installs Flux components and connects the cluster to GitHub.
+- `flux-reconcile` – Triggers an immediate pull and application of the latest Git state.
+- `flux-suspend` – Pauses reconciliation to prevent Flux from overwriting manual cluster tweaks.
+- `flux-status` – Provides a unified view of all Flux sources and kustomizations.
+- `flux-uninstall` – Cleanly removes the GitOps controller from the cluster.
 
 ### 5. The first release was not just a deployment — it was a dependency exercise
 
