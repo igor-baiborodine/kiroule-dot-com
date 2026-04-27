@@ -76,6 +76,30 @@ Recognizing that the `policy-service-api` is a critical foundation for the entir
 
 Additionally, I established structural guardrails to separate internal library logic from deployable artifacts. Infrastructure modules, such as `command-bus` and other service API modules, are published strictly as JAR files to GitHub Packages. In contrast, business services directly build OCI-compliant Docker images for the GitHub Container Registry (GHCR) without going through this step. I also adopted the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) standard to streamline this logic. By enforcing prefixes like `chore(k8s)` or `feat(svc)`, I enable the continuous integration process to automate versioning and provide a machine-readable audit trail explaining why a specific deployment changed. This ensures that our deployment history remains fully auditable and anchored in the repository as the sole source of truth.
 
+<details>
+  <summary><b>PR Validation: Enforcing Modular Discipline</b></summary>
+
+![Legacy API and Service PR CI/CD Diagram](legacy-api-svc-pr-diagram.png)
+
+</details> 
+
+<details>
+  <summary><b>API Releases: Building and Propagating Contracts</b></summary>
+
+![Legacy API CI/CD Diagram](legacy-api-release-diagram.png)
+
+</details> 
+
+<details>
+  <summary><b>Service Releases: Automating Modular Delivery</b></summary>
+
+![Legacy API CI/CD Diagram](legacy-service-release-diagram-4.png)
+
+</details> 
+&nbsp;
+
+For more details, please refer to this [commit](https://github.com/igor-baiborodine/insurance-hub/commit/471c51fc210a6932b9ad2f1ddeb46b16437faa07). 
+
 ### GitOps in QA: Keeping Flux Focused on Reconciliation
 
 While the "shift" phase successfully confirmed that our services function as Kubernetes workloads, the deployment model was still dependent on a manual "push" loop. Using an organized series of Make targets to build, load, and apply manifests was a necessary intermediate step, but it did not meet the operational maturity I envisioned for Phase 1. To address this issue, I introduced [Flux CD](https://fluxcd.io) to manage the QA environment. This transition represents a shift from an operator-driven push—where I, as the human operator, had to manually trigger the delivery of manifests from my local machine—to a declarative pull model. In this new approach, the cluster itself takes responsibility for fetching and applying changes, making the Git repository the definitive source of truth for the cluster’s state.
@@ -100,7 +124,7 @@ to the `k8s/Makefile`:
 - `flux-status` – Provides a unified view of all Flux sources and kustomizations.
 - `flux-uninstall` – Cleanly removes the GitOps controller from the cluster.
 
-For more details on the actual implementation, please refer to these commits: 
+For more details, please refer to these commits: 
 [21b266b](https://github.com/igor-baiborodine/insurance-hub/commit/21b266b25c5196ab3cb7f195c05e046fe529a993),
 [a943656](https://github.com/igor-baiborodine/insurance-hub/commit/a9436566e08d96e6dff0bda424e43d834d5cbf5a),
 [be4ba90](https://github.com/igor-baiborodine/insurance-hub/commit/be4ba906458b67defb936faefd1e6eb072149839).
