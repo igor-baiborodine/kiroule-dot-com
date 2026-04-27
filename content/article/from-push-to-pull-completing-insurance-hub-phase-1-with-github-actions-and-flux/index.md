@@ -160,7 +160,7 @@ For the final service rollout, the process required an additional step to integr
 
 This sequence transformed the first deployment from a simple command into a validation of the entire delivery architecture. By the time the gateway was successfully reconciled by Flux, I had verified not only the service code but also the automated versioning, the artifact registry permissions, and the dependency propagation logic. The first release confirmed that the monorepo could self-coordinate, turning a complex dependency exercise into a repeatable, straightforward operational routine.
 
-### 6. Pragmatic Automation: What I Deliberately Postponed
+### Pragmatic Automation: What I Deliberately Postponed
 
 The introduction of Flux and GitHub Actions marks a significant advancement in the maturity of the Insurance Hub. However, I made several deliberate choices to limit the scope of automation for Phase 1. My primary goal was to establish a stable and clear delivery path instead of an overly sophisticated one. Given the complexity of a monorepo undergoing foundational changes, I felt it was necessary to maintain manual checkpoints to ensure that every architectural change was intentional and verified.
 
@@ -170,7 +170,7 @@ Additionally, I chose not to implement a complex multi-loop delivery system or p
 
 Maintaining an explicit system was the right trade-off for Phase 1. It allowed me to validate the core mechanics—specifically the GitHub Actions matrix jobs, the internal API JAR publication, and the Flux reconciliation loop—without the complications of fully autonomous updates. By anchoring every deployment to a deliberate Git commit, I’ve ensured the platform remains self-consistent. The automation I did implement addresses the challenging problems of monorepo dependency propagation, while the automation I postponed allows me to maintain the operational clarity I need as I prepare for the more dynamic Phase 4 migration.
 
-### 7. Phase 1 is now actually complete
+### Phase 1 is now actually complete
 
 - Re-state what Phase 1 now includes:
     - clusters
