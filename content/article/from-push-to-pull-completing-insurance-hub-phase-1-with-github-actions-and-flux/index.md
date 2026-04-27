@@ -76,6 +76,10 @@ Recognizing that the `policy-service-api` is a critical foundation for the entir
 
 Additionally, I established structural guardrails to separate internal library logic from deployable artifacts. Infrastructure modules, such as `command-bus` and other service API modules, are published strictly as JAR files to GitHub Packages. In contrast, business services directly build OCI-compliant Docker images for the GitHub Container Registry (GHCR) without going through this step. I also adopted the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) standard to streamline this logic. By enforcing prefixes like `chore(k8s)` or `feat(svc)`, I enable the continuous integration process to automate versioning and provide a machine-readable audit trail explaining why a specific deployment changed. This ensures that our deployment history remains fully auditable and anchored in the repository as the sole source of truth.
 
+#### Monorepo Workflows: From PR Gate to Release Automation
+
+**Note:** The web release workflow follows the same pattern as the service workflow (`detect` → `build` → `publish` → `tag`), so only the service release workflow is shown.
+
 <details>
   <summary><b>PR Validation: Enforcing Modular Discipline</b></summary>
 
