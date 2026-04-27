@@ -97,7 +97,7 @@ Additionally, I established structural guardrails to separate internal library l
 <details>
   <summary><b>Service Releases: Automating Modular Delivery</b></summary>
 
-![Legacy API CI/CD Diagram](legacy-service-release-diagram-4.png)
+![Legacy API CI/CD Diagram](legacy-service-release-diagram.png)
 
 </details> 
 &nbsp;
