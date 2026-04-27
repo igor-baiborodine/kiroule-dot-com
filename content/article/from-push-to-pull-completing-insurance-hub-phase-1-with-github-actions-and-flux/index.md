@@ -133,16 +133,27 @@ For more details, please refer to these commits:
 [a943656](https://github.com/igor-baiborodine/insurance-hub/commit/a9436566e08d96e6dff0bda424e43d834d5cbf5a),
 [be4ba90](https://github.com/igor-baiborodine/insurance-hub/commit/be4ba906458b67defb936faefd1e6eb072149839).
 
-### 5. The first release was not just a deployment — it was a dependency exercise
+### Release Strategy: Navigating Dependency Minefield
 
-- Explain why the initial release had prerequisites
-- Tie release order to the module dependency summary and diagram
-- Explain API/service separation and why it shaped the rollout
-- Walk through the practical order:
-    - shared APIs first
-    - dependent services after
-    - gateway after dependent APIs stabilize
-- Show that the first release validated both automation and architecture
+With the GitHub Actions workflows finalized and Flux reconciliation active, the logical next step was the initial rollout to the QA cluster. However, the Insurance Hub is not a collection of isolated binaries; it is a web of interdependent Maven modules. I realized early on that a "deploy all" approach would fail due to the strict ordering required by internal API consumers and implementation providers. To manage this complexity, I produced a module dependency graph to visualize the hierarchy, which served as the blueprint for the release sequence.
+
+Initially, I considered a simultaneous release, but the inter-module coupling made this impractical. The system relies on a "bottom-up" propagation model where shared contracts (APIs) must exist in the artifact registry before implementation services can successfully compile and link against them.
+
+| Release Tier          | Modules                                                                  | Rationale & Procedure                                                                                                                         |
+|:----------------------|:-------------------------------------------------------------------------|:----------------------------------------------------------------------------------------------------------------------------------------------|
+| **1. Foundation**     | `auth-service`, `chat-service`, `command-bus-api`                        | Standalone identity and isolated messaging services. `command-bus-api` is the fundamental contract that triggers the `update-dependents` job. |
+| **2. Core Infra**     | `command-bus`                                                            | Released once the CI has automatically bumped the version in its `pom.xml` following the API update.                                          |
+| **3. Domain APIs**    | `policy-service-api`, `product-service-api`, `pricing-service-api`, etc. | Must be released in a specific sub-order (e.g., `policy-api` before `documents-api`). Each push triggers JAR publication to GitHub Packages.  |
+| **4. Implementation** | `policy-service`, `pricing-service`, `payment-service`, etc.             | These are triggered by auto-commits from the API tier. They consume the newly published JARs and produce OCI-compliant images for GHCR.       |
+| **5. Edge/Gateway**   | `agent-portal-gateway`, `web-vue`                                        | The final consumers. The gateway is released last as it depends on nearly all backend APIs to route traffic correctly.                        |
+
+This order is dictated by the propagation logic I built into the CI. When a change is pushed to a module like `policy-service-api`, the `legacy-release-api.yaml` workflow publishes the new JAR and identifies downstream services that require a version bump. However, after testing, I found that if one API depends on another—such as `documents-service-api` referencing `policy-service-api`—the version must be manually updated in the dependent API's `pom.xml` before pushing.
+
+To trigger these releases in a controlled manner, I adopted a pattern of "chore" commits. Since I am maintaining a static `1.0.0-SNAPSHOT` in the `pom.xml` to avoid version churn, I needed a way to signal to GitHub Actions that a specific module was ready for a formal release. For APIs, this typically involved a trivial change—like adding a comment to the `pom.xml`—with a commit message like `chore(payment-service-api): first release`. This approach effectively "pokes" the workflow for that specific path.
+
+For the final service rollout, the process required an additional step to wire the service into the GitOps reconciliation loop. In the case of the `agent-portal-gateway`, the release was triggered by two concurrent actions: adding the release-triggering comment to the service's `pom.xml` and uncommenting the service resource in the `k8s/overlays/qa/svc/kustomization.yaml` file. This ensured that as soon as the OCI image was published to GHCR, Flux was already authorized and instructed to pull the new workload into the `qa-svc` namespace.
+
+This sequence transformed the first deployment from a simple command into a validation of the entire delivery architecture. By the time the gateway was successfully reconciled by Flux, I had verified not only the service code but also the automated versioning, the artifact registry permissions, and the dependency propagation logic. The first release confirmed that the monorepo could self-coordinate, turning a complex dependency exercise into a repeatable, boring operational routine.
 
 ### 6. What I deliberately did not automate yet
 
@@ -152,14 +163,7 @@ For more details, please refer to these commits:
 - QA-first scope
 - Why keeping the system explicit was the right trade-off for Phase 1
 
-### 7. Using AI as an implementation accelerator
-
-- AI for workflow scaffolding, diagram drafting, and validation
-- AI for researching GitHub Actions and Flux patterns
-- AI helped reduce boilerplate and iteration time
-- Architecture and final decisions stayed human-driven
-
-### 8. Phase 1 is now actually complete
+### 7. Phase 1 is now actually complete
 
 - Re-state what Phase 1 now includes:
     - clusters
@@ -171,44 +175,6 @@ For more details, please refer to these commits:
 - Tease the next stage:
     - foundational observability maturation
     - and, ultimately, per-service Go migration
-
----
-
-### What Mermaid diagrams would add the most value
-
-Should be kept to **three diagrams max**.
-
-#### 1. API release workflow
-
-Show:
-
-- API module change
-- GitHub Actions release
-- Maven artifact publish
-- dependent version bump commit
-- downstream services consume new version
-
-This is probably the most distinctive technical story in the article.
-
-### 2. Service/web release workflow
-
-Show:
-
-- module change
-- workflow run
-- image build
-- push to GHCR
-- manifest update in Git
-- Flux reconcile to QA
-
-### 3. Flux reconciliation loop
-
-Show:
-
-- Git repository as desired state
-- Flux source fetch
-- Kustomization reconcile
-- QA cluster state convergence
 
 Continue reading the series ["Insurance Hub: The Way to Go"](/series/insurance-hub-the-way-to-go/):
 {{< series "Insurance Hub: The Way to Go" >}}
