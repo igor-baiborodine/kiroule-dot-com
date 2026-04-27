@@ -160,13 +160,15 @@ For the final service rollout, the process required an additional step to integr
 
 This sequence transformed the first deployment from a simple command into a validation of the entire delivery architecture. By the time the gateway was successfully reconciled by Flux, I had verified not only the service code but also the automated versioning, the artifact registry permissions, and the dependency propagation logic. The first release confirmed that the monorepo could self-coordinate, turning a complex dependency exercise into a repeatable, straightforward operational routine.
 
-### 6. What I deliberately did not automate yet
+### 6. Pragmatic Automation: What I Deliberately Postponed
 
-- No Flux image automation
-- No overly clever multi-loop delivery
-- No premature promotion orchestration
-- QA-first scope
-- Why keeping the system explicit was the right trade-off for Phase 1
+While the introduction of Flux and GitHub Actions represents a significant leap in maturity for the Insurance Hub, I made several deliberate choices to limit the scope of automation for Phase 1. My goal was to establish a stable, explicit delivery path rather than a "clever" one. For a complex monorepo in the midst of a foundational shift, I found that maintaining manual checkpoints was a necessary trade-off to ensure every architectural change was intentional and verified.
+
+Initially, I considered implementing Flux’s image automation to automatically update manifests whenever a new OCI image reached GHCR. However, after testing the modular release flows, I decided against it for this phase. Automated image updates can easily mask the causality between a code change and a cluster state change, making troubleshooting significantly harder. By requiring an explicit "chore" commit to update the image tag in the Kustomize overlay, I maintain a clear, human-readable audit trail in Git. I chose to keep this step manual to ensure that I am always aware of exactly which version is being reconciled into the QA environment.
+
+Similarly, I avoided implementing an overly clever multi-loop delivery system or premature promotion orchestration between environments. There are no automated "promotions" from local-dev to QA. Each environment is treated as a distinct target with its own explicit configuration. This "QA-first" scope for GitOps ensures that the delivery pipeline is battle-tested on the most production-like environment before I even consider further automation. I switched to this focused approach because premature orchestration often leads to "configuration gravity," where the complexity of the delivery tool begins to dictate architectural choices.
+
+Keeping the system explicit was the right trade-off for Phase 1. It allowed me to validate the core mechanics—the GitHub Actions matrix jobs, the internal API JAR publication, and the Flux reconciliation loop—without the noise of fully autonomous updates. By anchoring every deployment in a deliberate Git commit, I’ve ensured that the platform remains self-consistent. The automation I did implement solves the hard problems of monorepo dependency propagation, while the automation I postponed preserves the operational clarity I need as I move toward the more volatile Phase 4 migration.
 
 ### 7. Phase 1 is now actually complete
 
