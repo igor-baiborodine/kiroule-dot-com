@@ -48,7 +48,7 @@ For the GitOps reconciliation layer—specifically for the production-like QA en
 
 Before proceeding with the implementation of our CI/CD workflows, I gave careful thought to the underlying automation strategy. The Insurance Hub is a Maven monorepo where modules share a common Git history and depend on each other through internal APIs. This structure introduced three principal challenges: establishing a versioning strategy that works for both Java and future Go services, defining safety guardrails for inter-service dependency updates, and implementing automated version bumping driven by the commit history.
 
-#### Module Versioning: Decoupling Release Cycle
+#### Module Versioning: Decoupling Release Cycles
 
 I evaluated two primary versioning strategies for managing our modular monorepo: a **global repository version** and **independent per-service versioning**. Initially, the global "release train" approach seemed appealing due to its straightforward mental model—the entire platform would move from version `1.3.0` to `1.4.0` as a single unit. This model simplifies coordination for tightly coupled modules and keeps pipelines clear by avoiding a complex versioning matrix. However, it quickly became evident that this coarse-grained approach would introduce significant operational noise. Frequent, localized changes to a small service would necessitate a version bump across the entire stack, making it difficult to understand what had actually changed and triggering unnecessary builds for stable components.
 
@@ -56,7 +56,7 @@ Ultimately, I opted for independent semantic versioning for each module. This st
 
 This approach also reinforces independent service lifecycles, a core principle of the microservices architecture we are pursuing. Independent versioning ensures that consumers of the `product-service-api`, for example, are not forced to adopt updates they don't need, effectively decoupling release cycles and reducing the risk of creating a "distributed monolith." From a technical safety perspective, it eliminates race conditions in GH Actions; since each matrix job manages a unique, module-specific tag, multiple APIs can be built, tagged, and released in parallel without conflicting over the same Git reference.
 
-To maintain clarity between project eras, I have restricted legacy Java API versions to the `1.x.x` range, reserving `2.0.0+` for future Go-based services. Additionally, I have decided to keep the Maven `pom.xml` versions at a static `1.0.0-SNAPSHOT` for legacy modules. This decision establishes a baseline while placing the burden of truth on Git tags, which serve as the only reliable indicator of what code is actually running in production.
+As a project convention rather than a strict SemVer requirement, I have restricted legacy Java API versions to the `1.x.x` range, reserving `2.0.0+` for future Go-based services to maintain clarity between project eras. Additionally, I chose to keep the Maven `pom.xml` versions at a static `1.0.0-SNAPSHOT` for legacy modules to avoid version churn in the monorepo. While this sacrifices some in-file version visibility, treating Git tags as the release source of truth ensures that the system state is tied to immutable tags rather than transient working-tree updates.
 
 #### Artifact Tagging: Balancing Traceability and Immutability
 
