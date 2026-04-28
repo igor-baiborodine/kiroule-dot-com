@@ -72,9 +72,9 @@ Recognizing that the `policy-service-api` is a critical foundation for the entir
 
 Additionally, I established structural guardrails to separate internal library logic from deployable artifacts. Infrastructure modules, such as `command-bus` and other API modules, are published strictly as JAR files to GitHub Packages. In contrast, business services directly build OCI-compliant Docker images for GHCR without going through this step. I also adopted the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) standard to streamline this logic. By enforcing prefixes like `chore(k8s)` or `feat(svc)`, I enable the continuous integration process to automate versioning and provide a machine-readable audit trail. This keeps deployment history auditable and ties each release back to an explicit repository change.
 
-#### Monorepo Workflows: From PR Gate to Release Automation
+#### Monorepo Workflows: From PR Validation to Release Automation
 
-**Note:** The web release workflow follows the same pattern as the service workflow (`detect` → `build` → `publish` → `tag`), so only the service release workflow is shown.
+I ended up with three workflow types to manage the monorepo lifecycle. The following diagrams illustrate the logic for PR validation and the subsequent release stages:
 
 <details>
   <summary><b>PR Validation: Enforcing Modular Discipline</b></summary>
@@ -93,12 +93,12 @@ Additionally, I established structural guardrails to separate internal library l
 <details>
   <summary><b>Service Releases: Automating Modular Delivery</b></summary>
 
-![Legacy API CI/CD Diagram](legacy-service-release-diagram.png)
+![Legacy Service CI/CD Diagram](legacy-service-release-diagram.png)
 
 </details> 
 &nbsp;
 
-For more details, please refer to this [commit](https://github.com/igor-baiborodine/insurance-hub/commit/471c51fc210a6932b9ad2f1ddeb46b16437faa07). 
+**Note**: The web release workflow follows the same pattern as the service workflow (`detect` → `build` → `publish` → `tag`). The first full pass of these workflows landed in [this commit](https://github.com/igor-baiborodine/insurance-hub/commit/471c51fc210a6932b9ad2f1ddeb46b16437faa07), which established the foundational YAML definitions and path-filtering logic.
 
 ### GitOps in QA: Keeping Flux Focused on Reconciliation
 
