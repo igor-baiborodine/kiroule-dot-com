@@ -1,9 +1,9 @@
 ---
-title: "From Push to Pull: Completing Insurance Hub Phase 1 with GitHub Actions and Flux"
+title: "From Push to Pull: Completing Insurance Hub Phase 1 with CI/CD and GitOps"
 date: 2026-04-20T08:00:00-04:00
 
 categories: [ "Java", "Go" , "Write-up" ]
-tags: [ "Java-to-Go", "Monorepo", "Kubernetes", "GitOps", "CICD", "Flux", "GitHub Actions", "Docker" ]
+tags: [ "Java-to-Go", "Monorepo", "Kubernetes", "GitOps", "CICD", "GitHub Actions", "GHCR", "Flux" ]
 toc: false
 series: [ "Insurance Hub: The Way to Go" ]
 
@@ -165,15 +165,15 @@ Maintaining a clear and explicit system was the right trade-off for Phase 1. I a
 
 ### Phase 1 Completion: Bridging Operational Gap
 
-The implementation of GitOps reconciliation and modular release workflows marks the formal conclusion of Phase 1. This pragmatic choice established a declarative delivery path now, anchoring the legacy stack to a version-controlled source of truth rather than relying on manual workstation commands.
+The implementation of GitOps reconciliation and modular release workflows marks the formal conclusion of Phase 1. This practical decision has established a declarative delivery path, anchoring the legacy stack to a version-controlled source of truth, rather than relying on manual commands.
 
-The platform now has a working cloud-native baseline for the Insurance Hub. This includes dual Kind and K3s clusters, a full suite of containerized stateful infrastructure, and all ten legacy Java microservices operating with Kubernetes-native service discovery and S3-compatible storage.
+The platform now features a functioning cloud-native baseline for the Insurance Hub. This includes dual Kind and K3s clusters, a comprehensive suite of containerized stateful infrastructure, and all ten legacy Java microservices operating with Kubernetes-native service discovery and S3-compatible storage.
 
-Most importantly, the previous manual "push" model for application delivery has been replaced with a Git-driven reconciliation process. While stateful infrastructure continues to be managed through orchestrated Make targets, the entire service layer is now managed using structured Kustomize overlays and synchronized with Flux.
+Most importantly, the previous manual "push" model for application delivery has been replaced by a Git-driven reconciliation process. While stateful infrastructure continues to be managed through orchestrated Make targets, the entire service layer is now managed using structured Kustomize overlays and synchronized with Flux.
 
-This transition significantly reduces operational risk for the upcoming phases of the migration. The coordination work is now mostly encoded in workflows and overlays, which lets me focus on service changes rather than release mechanics. I can iterate on implementations with the confidence that the environment's state is predictable and reproducible.
+This transition significantly reduces operational risk for the upcoming phases of migration. Most of the coordination work is now encoded in workflows and overlays, allowing me to focus on service changes rather than the mechanics of release. I can iterate on implementations with the confidence that the state of the environment is predictable and reproducible.
 
-With delivery automation in place, the next gap to close is observability. Phase 2 will concentrate on maturing our foundational visibility by integrating OpenTelemetry with a unified Grafana Tempo backend. This prepares the platform for Phase 3, where I will simplify the data layer by migrating product data from MongoDB to PostgreSQL. Together, these stages ensure the infrastructure and persistence strategies are unified before we begin the service-by-service Go migration in Phase 4.
+With delivery automation now in place, the next priority is to enhance observability. Phase 2 will focus on improving our foundational visibility by integrating OpenTelemetry with a unified Grafana Tempo backend. This sets the stage for Phase 3, where I will simplify the data layer by migrating product data from MongoDB to PostgreSQL. Together, these stages will ensure that the infrastructure and persistence strategies are unified before we begin the service-by-service Go migration in Phase 4.
 
 Continue reading the series ["Insurance Hub: The Way to Go"](/series/insurance-hub-the-way-to-go/):
 {{< series "Insurance Hub: The Way to Go" >}}
