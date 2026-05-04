@@ -367,7 +367,7 @@ that the state of the environment is predictable and reproducible.
 
 With delivery automation now in place, the next priority is to enhance observability. 
 [Phase 2](https://github.com/igor-baiborodine/insurance-hub/blob/main/docs/system-overview-and-migration-analysis.md#phase-2-foundational-observability) 
-will focus on improving our foundational visibility by integrating OpenTelemetry with a unified 
+will focus on improving our foundational oservability by integrating OpenTelemetry with a unified 
 Grafana Tempo backend. This sets the stage for 
 [Phase 3](https://github.com/igor-baiborodine/insurance-hub/blob/main/docs/system-overview-and-migration-analysis.md#phase-3-data-store-consolidation), 
 where I will simplify the data layer by migrating product data from MongoDB to PostgreSQL. Together, 
