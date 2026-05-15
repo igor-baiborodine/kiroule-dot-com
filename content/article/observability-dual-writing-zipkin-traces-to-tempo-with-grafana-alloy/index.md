@@ -42,11 +42,9 @@ In this phase, the focus was primarily on infrastructure. I regarded the install
 
 ### Gateway Pivot: Decoupling Tracing with Grafana Alloy
 
-Initially, my plan for Phase 2 was to simply drop an OpenTelemetry Collector into the cluster to bridge the gap. However, after testing the bootstrap sequence on our K3s QA environment, I chose to implement **Grafana Alloy** as a permanent telemetry gateway instead of a transient collector.
+Initially, my plan for Phase 2 was to use a standard OpenTelemetry Collector as a temporary bridge, with the intent to decommission it once our new Go services were sending traces directly to Tempo. However, after researching OpenTelemetry best practices and the architectural requirements for a multi-language cluster, I switched to **Grafana Alloy** as a permanent telemetry gateway.
 
-This was a strategic pivot rather than a tooling preference. The core problem wasn't that Zipkin was failing; it was that our tracing was tightly coupled to a legacy backend and a specific UI workflow. To modernize without triggering a risky, cluster-wide "instrumentation migration" inside every Java service, we needed a stable abstraction layer.
-
-Alloy provides what I call a "permanent contract" for the cluster. By exposing stable Zipkin and OTLP receivers, it allows our legacy Micronaut services to keep emitting traces exactly as they always have, while providing a Day 1 endpoint for the new Go services we'll build in Phase 4. The services no longer need to know where the data ends up—whether it's going to Zipkin, Tempo, or a dual-write configuration for validation.
+This was a strategic pivot rather than a tooling preference. The core problem wasn't just Zipkin; it was that our telemetry pipeline was tightly coupled to specific backends. By implementing Alloy as a permanent infrastructure layer, I’ve established what I call a "permanent contract" for the cluster. Alloy provides stable, cluster-wide endpoints for both legacy Zipkin traffic and modern OTLP signals, allowing us to evolve our backend storage (from Zipkin to Tempo) without ever needing to touch service-level instrumentation again.
 
 The scope of this phase did grow by one specific ticket: hardening the QA K3s provisioning. Because observability components like Alloy and Tempo are CRD-heavy, our Helm-based bootstrap initially became flaky. I had to add explicit CRD readiness gates to ensure the gateway wouldn't attempt to start before its dependencies were fully reconciled by the API server. I’ll dive into those specific `Makefile` targets in a later post.
 
