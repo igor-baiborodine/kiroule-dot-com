@@ -22,7 +22,9 @@ directly addresses this constraint. The goal is to establish Grafana Tempo as th
 
 In this phase, Grafana Loki is also deployed, but we intentionally refrain from enabling log ingestion. Loki is viewed as part of the target stack and a prerequisite for Phase 4, rather than a complete logging rollout. The focus here is clear and intentional: set up Tempo, place Alloy in front of it, validate end-to-end dual-writing, and strengthen the QA K3s provisioning steps to ensure that the entire observability installation is repeatable.
 
-### Phase 2 Scope: Foundational Observability
+{{< toc >}}
+
+### Phase 2 Scoping: Establishing Observability Foundation
 
 Phase 2 was designed as a strategic bridge between the initial Kubernetes migration and the forthcoming service rewrites. The primary objective was to modernize the telemetry backend while keeping the Java services unchanged. By establishing a robust tracing and logging foundation early on, I ensured that the hybrid environment—where legacy Java services and new Go services will eventually coexist—would have a unified "single pane of glass" for troubleshooting.
 
@@ -37,6 +39,30 @@ in GitHub Projects, which was divided into four child tickets. I focused on sett
 | **[[4]issue-86](https://github.com/igor-baiborodine/insurance-hub/issues/86#issue-4425327776)** | **QA Cluster Provisioning Refinement** | Update Make targets and infrastructure automation to handle the increased resource footprints of the observability components. |
 
 In this phase, the focus was primarily on infrastructure. I regarded the installation of Loki and Tempo as essential for the long-term health of the platform, ensuring that our storage strategy remained aligned with the MinIO-based approach established in Phase 1. The introduction of Grafana Alloy allowed me to validate the end-to-end trace flow from existing Java services into Tempo, effectively strengthening the observability pipeline even before any Go code was written. This proactive setup minimizes operational risks in Phase 4, as the monitoring environment is already mature and ready to receive OTLP signals.
+
+### Gateway Pivot: Decoupling Tracing with Grafana Alloy
+
+Initially, my plan for Phase 2 was to simply drop an OpenTelemetry Collector into the cluster to bridge the gap. However, after testing the bootstrap sequence on our K3s QA environment, I chose to implement **Grafana Alloy** as a permanent telemetry gateway instead of a transient collector.
+
+This was a strategic pivot rather than a tooling preference. The core problem wasn't that Zipkin was failing; it was that our tracing was tightly coupled to a legacy backend and a specific UI workflow. To modernize without triggering a risky, cluster-wide "instrumentation migration" inside every Java service, we needed a stable abstraction layer.
+
+Alloy provides what I call a "permanent contract" for the cluster. By exposing stable Zipkin and OTLP receivers, it allows our legacy Micronaut services to keep emitting traces exactly as they always have, while providing a Day 1 endpoint for the new Go services we'll build in Phase 4. The services no longer need to know where the data ends up—whether it's going to Zipkin, Tempo, or a dual-write configuration for validation.
+
+The scope of this phase did grow by one specific ticket: hardening the QA K3s provisioning. Because observability components like Alloy and Tempo are CRD-heavy, our Helm-based bootstrap initially became flaky. I had to add explicit CRD readiness gates to ensure the gateway wouldn't attempt to start before its dependencies were fully reconciled by the API server. I’ll dive into those specific `Makefile` targets in a later post.
+
+#### Trace Flow Transition: The Dual-Write Strategy
+
+The architecture of our trace flow underwent a significant shift during this phase. In the legacy state, services pushed directly to the Zipkin backend. In the new Phase 2 state, Alloy sits in the center, acting as a traffic controller.
+
+<- diagrams go here ->
+
+I chose to implement a dual-write strategy where Alloy forwards traces to both Zipkin and Tempo simultaneously. This was worth the additional complexity for three reasons:
+
+1.  **Zero Blast Radius**: Zipkin remained the primary safety net for the team. If Tempo or the MinIO backing store struggled under load, our existing debugging workflow remained untouched.
+2.  **Side-by-Side Validation**: We could compare the same traces in the legacy Zipkin UI and the new Grafana-first Tempo dashboards to ensure no data was being dropped or malformed during the OTLP translation.
+3.  **The Clean Flip**: This setup provides a clear decommissioning path. Once we are confident in Tempo's retention and performance, we simply remove the Zipkin exporter from the Alloy configuration. No service restarts, no code changes, and no ticket churn for the feature teams.
+
+This transition effectively decouples our telemetry "producers" from the "consumers," turning observability from a hard-coded dependency into a managed infrastructure service.
 
 ### Grafana Loki
 
