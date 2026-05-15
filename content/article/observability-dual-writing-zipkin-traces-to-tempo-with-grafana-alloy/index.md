@@ -13,6 +13,8 @@ author: "Igor Baiborodine"
 After [Phase 1](https://github.com/igor-baiborodine/insurance-hub/blob/main/docs/system-overview-and-migration-analysis.md#phase-1-foundational-infrastructure--environment-migration-lift-and-shift), 
 the Insurance Hub had established a Kubernetes runtime and a GitOps delivery loop that functioned reliably in the QA K3s environment. This successfully closed the operational gap around deployments, but it also highlighted another issue. Although the platform could be reconciled from Git, the tools for understanding cross-service behavior were still confined to a legacy setup.
 
+<!--more-->
+
 Zipkin tracing was in place and operational; however, it was limited to a single backend and an outdated version of the system. 
 [Phase 4](https://github.com/igor-baiborodine/insurance-hub/blob/main/docs/system-overview-and-migration-analysis.md#phase-4-phased-service-migration-to-go-strangler-fig-pattern) 
 won't involve a clean cutover; instead, it is designed to operate in a mixed state where some services are still in legacy Java while others have migrated to Go. Consequently, requests will frequently cross this boundary. During this hybrid period, it is crucial for distributed traces to converge in one location; otherwise, troubleshooting can become a challenging task of piecing together fragmented views.
