@@ -1,5 +1,5 @@
 ---
-title: "Observability: Dual-Writing Zipkin Traces to Tempo with Grafana Alloy"
+title: "Legacy to Modern: Bridging Trace Flows with Dual-Writing and Alloy"
 date: 2026-05-15T08:00:00-04:00
 
 categories: [ "Java", "Go" , "Write-up" ]
