@@ -44,21 +44,25 @@ In this phase, the focus was primarily on infrastructure. I regarded the install
 
 Initially, my plan for Phase 2 was to use a standard OpenTelemetry Collector as a temporary bridge, with the intent to decommission it once our new Go services were sending traces directly to Tempo. However, after researching OpenTelemetry best practices and the architectural requirements for a multi-language cluster, I switched to **Grafana Alloy** as a permanent telemetry gateway.
 
-This was a strategic pivot rather than a tooling preference. The core problem wasn't just Zipkin; it was that our telemetry pipeline was tightly coupled to specific backends. By implementing Alloy as a permanent infrastructure layer, I’ve established what I call a "permanent contract" for the cluster. Alloy provides stable, cluster-wide endpoints for both legacy Zipkin traffic and modern OTLP signals, allowing us to evolve our backend storage (from Zipkin to Tempo) without ever needing to touch service-level instrumentation again.
-
-The scope of this phase did grow by one specific ticket: hardening the QA K3s provisioning. Because observability components like Alloy and Tempo are CRD-heavy, our Helm-based bootstrap initially became flaky. I had to add explicit CRD readiness gates to ensure the gateway wouldn't attempt to start before its dependencies were fully reconciled by the API server. I’ll dive into those specific `Makefile` targets in a later post.
+This was a strategic pivot rather than a tooling preference. The core problem wasn't just Zipkin; it was that our telemetry pipeline was tightly coupled to specific backends. By implementing Alloy as a permanent infrastructure layer, I’ve established what I call a "permanent contract" for the cluster. Alloy provides stable, cluster-wide endpoints for both legacy Zipkin traffic and modern OTLP signals, allowing us to evolve our backend storage (from Zipkin to Tempo) without ever needing to touch service-level instrumentation again. Furthermore, since our entire modern stack is Grafana-centered, Alloy serves as the native glue that ensures seamless correlation between logs, metrics, and traces within the same ecosystem.
 
 #### Trace Flow Transition: The Dual-Write Strategy
 
 The architecture of our trace flow underwent a significant shift during this phase. In the legacy state, services pushed directly to the Zipkin backend. In the new Phase 2 state, Alloy sits in the center, acting as a traffic controller.
 
-<- diagrams go here ->
+<details>
+  <summary><b>Flow Transition: From Legacy to Target State</b></summary>
+
+![Trace Flow Transition](trace-flow-transition-diagram.png)
+
+</details> 
+&nbsp;
 
 I chose to implement a dual-write strategy where Alloy forwards traces to both Zipkin and Tempo simultaneously. This was worth the additional complexity for three reasons:
 
 1.  **Zero Blast Radius**: Zipkin remained the primary safety net for the team. If Tempo or the MinIO backing store struggled under load, our existing debugging workflow remained untouched.
 2.  **Side-by-Side Validation**: We could compare the same traces in the legacy Zipkin UI and the new Grafana-first Tempo dashboards to ensure no data was being dropped or malformed during the OTLP translation.
-3.  **The Clean Flip**: This setup provides a clear decommissioning path. Once we are confident in Tempo's retention and performance, we simply remove the Zipkin exporter from the Alloy configuration. No service restarts, no code changes, and no ticket churn for the feature teams.
+3.  **The Clean Flip**: This setup provides a clear decommissioning path. Once we are confident in Tempo's retention and performance, we simply remove the Zipkin exporter from the Alloy configuration, resulting in no service restarts and no code changes.
 
 This transition effectively decouples our telemetry "producers" from the "consumers," turning observability from a hard-coded dependency into a managed infrastructure service.
 
