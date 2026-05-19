@@ -68,11 +68,11 @@ I chose to implement a dual-write strategy in which Alloy forwards traces to bot
 
 This transition effectively decouples our telemetry "producers" from the "consumers," transforming observability from a hard-coded dependency into a manageable infrastructure service.
 
-### Stack Observability: Implementing Logging and Tracing
+### Grafana-centered Observability: Implementing Logging and Tracing
 
 Completing the observability pillars for the QA K3s cluster is a critical objective for Phase 2. While the initial setup provided basic metrics through the Kube Prometheus Stack, we lacked a unified method for log aggregation and advanced trace analysis. This absence of integration made cross-service correlation challenging during troubleshooting.
 
-### Grafana Loki
+#### Loki
 
 The legacy Java services do not have any centralized logging capabilities, resulting in fragmented console output that requires manual, ad-hoc aggregation. As we transition these services to Go in the future, I have prioritized establishing a robust logging foundation. Given our Grafana-centered stack, [Loki](https://grafana.com/oss/loki/) was the logical choice for log aggregation. It follows the same label-based indexing philosophy as Prometheus, avoiding the high resource overhead associated with full-text indexing while providing the query performance necessary for rapid incident response.
 
@@ -84,17 +84,17 @@ The deployment utilizes a dedicated MinIO tenant for Loki, provisioned through o
 
 To ensure the persistence layer is reliable, I wrote a dedicated runbook to validate that logs are correctly pushed via the HTTP API and stored as objects in the `loki-logs` MinIO bucket. This verification process—including the specific `curl` commands and expected JSON responses—is detailed in ["Verify Loki Logs"](https://github.com/igor-baiborodine/insurance-hub/blob/main/k8s/tests/infra/verify-loki-logs/verify-loki-logs.md) guide providing a repeatable method to confirm that our logging infrastructure is both accessible and production-ready.
 
-#### Grafana Tempo
+#### Tempo
 
 * Provide implementation details.
 * List new Makefile targets for managing Grafana Tempo and a runbook for validation.
 
-#### Grafana Alloy
+#### Alloy
 
 * Provide implementation details.
 * List new Makefile targets for managing Grafana Alloy and a runbook for validation.
 
-#### Provisioning of K3s Cluster in QA
+### Provisioning of K3s Cluster in QA
 
 * Explain in detail why the hardening was needed.
 * Provide implementation details: main change - wait until CRDs are ready.
