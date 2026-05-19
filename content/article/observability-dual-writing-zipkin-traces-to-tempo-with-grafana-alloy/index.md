@@ -70,20 +70,19 @@ This transition effectively decouples our telemetry "producers" from the "consum
 
 ### Stack Observability: Implementing Logging and Tracing
 
-Completing the observability pillars for the QA K3s cluster is a critical objective for Phase 2. While the initial setup provided basic metrics via the Kube Prometheus Stack, we lacked a unified mechanism for log aggregation and advanced trace analysis, which made cross-service correlation difficult during troubleshooting. To address this, I have expanded the stack to include centralized logging and high-performance tracing backends, all integrated within our existing Grafana instance.
+Completing the observability pillars for the QA K3s cluster is a critical objective for Phase 2. While the initial setup provided basic metrics through the Kube Prometheus Stack, we lacked a unified method for log aggregation and advanced trace analysis. This absence of integration made cross-service correlation challenging during troubleshooting.
 
-#### Grafana Loki
+### Grafana Loki
 
-The legacy Java services lack any centralized logging capabilities, leaving us with fragmented console output that required manual, ad-hoc aggregation. As we migrate these services to Go in the future, I have prioritized establishing a robust logging foundation. Given our Grafana-centered stack, Loki was the logical choice for log aggregation. It follows the same label-based indexing philosophy as Prometheus, avoiding the high resource overhead of full-text indexing while providing the query performance needed for rapid incident response.
+The legacy Java services do not have any centralized logging capabilities, resulting in fragmented console output that requires manual, ad-hoc aggregation. As we transition these services to Go in the future, I have prioritized establishing a robust logging foundation. Given our Grafana-centered stack, [Loki](https://grafana.com/oss/loki/) was the logical choice for log aggregation. It follows the same label-based indexing philosophy as Prometheus, avoiding the high resource overhead associated with full-text indexing while providing the query performance necessary for rapid incident response.
 
-The deployment leverages a dedicated MinIO tenant for Loki, provisioned through our established operator patterns to ensure log storage is isolated and scalable. I integrated Loki into the QA cluster using a streamlined set of Makefile targets to manage the lifecycle and access:
-
+The deployment utilizes a dedicated MinIO tenant for Loki, provisioned through our established operator patterns to ensure that log storage is both isolated and scalable. I integrated Loki into the QA cluster using a streamlined set of [Makefile targets](https://github.com/igor-baiborodine/insurance-hub/blob/9c359a474ec83ce202d08d8d8ae8a0944491b42a/k8s/Makefile#L357) to manage its lifecycle and access.
 - `loki-install` – Deploys Grafana Loki via Helm chart into the `qa-monitoring` namespace.
 - `loki-status` – Validates the health of Loki pods and services.
 - `loki-ui` – Establishes a port-forward to the Loki HTTP API for direct querying.
 - `loki-uninstall` – Removes the Loki deployment from the cluster.
 
-To ensure the persistence layer is reliable, I wrote a dedicated runbook to validate that logs are correctly pushed via the HTTP API and stored as objects in the `loki-logs` MinIO bucket. This verification process—including the specific `curl` commands and expected JSON responses—is detailed in "Verify Loki Logs" runbook providing a repeatable method to confirm that our logging infrastructure is both accessible and production-ready.
+To ensure the persistence layer is reliable, I wrote a dedicated runbook to validate that logs are correctly pushed via the HTTP API and stored as objects in the `loki-logs` MinIO bucket. This verification process—including the specific `curl` commands and expected JSON responses—is detailed in ["Verify Loki Logs"](https://github.com/igor-baiborodine/insurance-hub/blob/main/k8s/tests/infra/verify-loki-logs/verify-loki-logs.md) guide providing a repeatable method to confirm that our logging infrastructure is both accessible and production-ready.
 
 #### Grafana Tempo
 
