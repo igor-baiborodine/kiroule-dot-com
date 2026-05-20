@@ -130,9 +130,11 @@ During Phase 2, my interaction with these tools changed significantly. Initially
 
 It is important to note that this agentic workflow is still a work in progress. I am refining the boundaries between my manual engineering efforts and automated assistance to ensure the highest standards of code quality and architectural integrity. I will provide more detailed insights and a final analysis of this methodology in upcoming articles, once the patterns for our Go service migration have been fully finalized.
 
-### Conclusion
+### Phase 2 Completion: Securing Observability Safety Layer
 
-* What’s next: Phase 3.
+Phase 2 concludes with a significantly hardened observability foundation that transforms our distributed system from a collection of "black boxes" into a transparent, queryable environment. We have successfully deployed Tempo to receive and store traces, while Grafana Alloy now serves as our permanent telemetry gateway, dual-writing spans to both legacy Zipkin and modern Tempo backends to maintain continuity. Furthermore, our QA cluster provisioning is now deterministic, ensuring that CRD-based stacks are fully established before their custom resources are applied. Although Loki is currently deployed only as a placeholder, the integration patterns for our structured logging are already validated.
+
+This observability stack serves as the critical safety layer for the upcoming technical transitions. As we move into Phase 3—the consolidation of our data stores—we will rely on these telemetry signals to monitor the integrity of our ETL scripts and the performance of our new PostgreSQL JSONB schemas. By migrating our product data away from MongoDB now, we reduce the operational complexity of the system before we begin the high-risk language migration to Go. With full trace visibility in place, we can execute these database refactors with the confidence that any regressions in inter-service communication or data latency will be immediately visible.
 
 Continue reading the series ["Insurance Hub: The Way to Go"](/series/insurance-hub-the-way-to-go/):
 {{< series "Insurance Hub: The Way to Go" >}}
