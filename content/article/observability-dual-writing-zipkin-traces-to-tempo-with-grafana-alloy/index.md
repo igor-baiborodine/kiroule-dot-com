@@ -108,10 +108,15 @@ Alloy is deployed as a central service in the `qa-monitoring` namespace. It is c
 
 To verify the integrity of the pipeline, I developed a runbook that tests the end-to-end flow of traces through the collector. By sending spans to Alloy’s receivers and monitoring their successful propagation to Tempo, we ensure that our telemetry system is correctly configured. This setup, outlined in the ["Verify Alloy Traces"](https://github.com/igor-baiborodine/insurance-hub/blob/main/k8s/tests/infra/verify-alloy-traces/verify-alloy-traces.md) guide, gives us the confidence to proceed with the full service migration, knowing that our observability bridge is stable and production-ready. 
 
-### Provisioning of K3s Cluster in QA
+### QA Cluster: Stabilizing Infrastructure Bootstraps
 
-* Explain in detail why the hardening was needed.
-* Provide implementation details: main change - wait until CRDs are ready.
+Throughout Phase 2, the reliability of our QA environment—running on K3s—became a primary focus as we automated the deployment of the full observability stack. While moving from manual installs to codified Make targets, I encountered a persistent issue: CRD-based stacks like CloudNativePG, Prometheus, and Strimzi would fail in subtle, non-deterministic ways. These failures typically occurred during the initial cluster bootstrap when the Kubernetes API server had not yet fully registered or processed a Custom Resource Definition (CRD) before a dependent Custom Resource (CR) was applied.
+
+Initially, these race conditions appeared as flaky automation results or false negatives during deployment. However, after testing various approaches to sequence these dependencies, I determined that simply layering Helm charts or Kustomize manifests was insufficient. A successful deployment requires that we wait until CRDs are explicitly in an `Established` state and usable by the API server. This ensures that the control plane can validate and persist the subsequent resources without throwing transient errors that disrupt the GitOps flow.
+
+I refactored the infrastructure deployment targets to incorporate explicit readiness checks using `kubectl wait` and iterative status polling. For instance, when deploying the CloudNativePG operator for our PostgreSQL clusters, the automation now pauses until the `clusters.postgresql.cnpg.io` CRD is established. We then poll until the API server affirmatively accepts a `get` request for that resource type. This transition from "fire and forget" to deterministic readiness has stabilized our bootstrap process, making observability installs repeatable across repeated cluster teardowns.
+
+Additionally, I simplified the physical topology of the QA environment. Initially, the cluster was conceived with separate master and worker nodes; however, I later implemented an optional single-node architecture to streamline the development cycle. The primary rationale for this change was to speed up the testing of new cluster provisioning changes by reducing the overhead of managing multiple LXD containers. By removing default taints from the master node to allow workload scheduling, I created a leaner, more responsive footprint for our Phase 2 validation without sacrificing the integrity of the multi-namespace monitoring stack.
 
 ### AI Usage
 
