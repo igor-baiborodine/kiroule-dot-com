@@ -98,15 +98,15 @@ To validate the integration, I created a technical runbook that demonstrates the
 
 #### Alloy
 
-With Loki and Tempo serving as our storage backends, the final requirement for Phase 2 was a unified telemetry collector. While we initially considered a standalone OpenTelemetry Collector, I opted for [Grafana Alloy](https://grafana.com/oss/alloy/) to serve as our primary cluster-wide pipeline. Alloy acts as the critical bridge between our legacy Java services and the modern observability stack, handling the ingestion, processing, and routing of all telemetry signals from a single, programmable agent.
+With Loki and Tempo serving as our storage backends, the final requirement for Phase 2 was a unified telemetry collector. While a standalone OpenTelemetry Collector was initially considered, I opted for [Grafana Alloy](https://grafana.com/oss/alloy/) to serve as our primary cluster-wide pipeline. Alloy acts as the critical bridge between our legacy Java services and the modern observability stack, handling the ingestion, processing, and routing of all telemetry signals from a single, programmable agent.
 
-Alloy is deployed as a central service in the `qa-monitoring` namespace, configured to receive Zipkin spans from legacy services and OTLP data from our new Go services. This consolidation eliminates the need for managing multiple disparate collectors and simplifies our infrastructure footprint. I have introduced several [Makefile targets](https://github.com/igor-baiborodine/insurance-hub/blob/9c359a474ec83ce202d08d8d8ae8a0944491b42a/k8s/Makefile#L430) to manage Alloy's lifecycle within the cluster.
+Alloy is deployed as a central service in the `qa-monitoring` namespace. It is configured to receive Zipkin spans from our legacy services and OTLP data from our new Go services. This consolidation removes the need to handle multiple disparate collectors, simplifying our infrastructure footprint. I have also introduced several [Makefile targets](https://github.com/igor-baiborodine/insurance-hub/blob/9c359a474ec83ce202d08d8d8ae8a0944491b42a/k8s/Makefile#L439) to manage Alloy's lifecycle within the cluster.
 - `alloy-install` – Deploys Grafana Alloy via Helm chart with our custom pipelines.
 - `alloy-status` – Validates that the Alloy pods and ingestion services are healthy.
 - `alloy-ui` – Forwards the Alloy dashboard for real-time pipeline debugging and component inspection.
 - `alloy-uninstall` – Removes the Alloy agent from the monitoring namespace.
 
-To confirm the pipeline’s integrity, I developed a verification runbook that tests the end-to-end flow of traces through the collector. By sending spans to Alloy’s receivers and observing their successful propagation to Tempo, we ensure that our telemetry "transit hub" is correctly configured. This setup, detailed in the ["Verify Alloy Traces"](https://github.com/igor-baiborodine/insurance-hub/blob/main/k8s/tests/infra/verify-alloy-traces/verify-alloy-traces.md) guide, provides the necessary confidence to proceed with the full service migration, knowing our observability bridge is stable and production-ready.
+To verify the integrity of the pipeline, I developed a runbook that tests the end-to-end flow of traces through the collector. By sending spans to Alloy’s receivers and monitoring their successful propagation to Tempo, we ensure that our telemetry system is correctly configured. This setup, outlined in the ["Verify Alloy Traces"](https://github.com/igor-baiborodine/insurance-hub/blob/main/k8s/tests/infra/verify-alloy-traces/verify-alloy-traces.md) guide, gives us the confidence to proceed with the full service migration, knowing that our observability bridge is stable and production-ready. 
 
 ### Provisioning of K3s Cluster in QA
 
