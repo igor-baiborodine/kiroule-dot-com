@@ -86,15 +86,15 @@ To ensure the persistence layer is reliable, I wrote a dedicated runbook to vali
 
 #### Tempo
 
-The legacy Java environment utilizes Zipkin for distributed tracing, storing spans in Elasticsearch. While this provides basic visibility, it functions as a silo that is difficult to correlate with our emerging metrics and logs. To unify our observability data, I have implemented [Tempo](https://grafana.com/oss/tempo/) as our new high-scale trace storage backend. Tempo’s design allows us to store massive amounts of trace data cost-effectively by utilizing object storage, which fits perfectly with our move toward S3-compatible persistence.
+The legacy Java environment uses Zipkin for distributed tracing, storing spans in Elasticsearch. While this setup provides basic visibility, it operates as a silo, making it challenging to correlate with our emerging metrics and logs. To unify our observability data, we have integrated [Tempo](https://grafana.com/oss/tempo/) as our new high-scale trace storage backend. Tempo is designed to store large volumes of trace data cost-effectively by utilizing object storage, which aligns perfectly with our transition to S3-compatible persistence.
 
-Like our logging setup, Tempo is deployed with a dedicated MinIO tenant to ensure storage isolation and independent scaling. I have added a series of [Makefile targets](https://github.com/igor-baiborodine/insurance-hub/blob/main/k8s/Makefile) to the QA cluster configuration to automate the deployment and operational checks of the tracing backend.
+Similar to our logging system, Tempo is deployed with a dedicated MinIO tenant to ensure storage isolation and independent scaling. I have added several [Makefile targets](https://github.com/igor-baiborodine/insurance-hub/blob/9c359a474ec83ce202d08d8d8ae8a0944491b42a/k8s/Makefile#L398) to the QA cluster configuration to automate the deployment and operational checks of the tracing backend.
 - `tempo-install` – Deploys Grafana Tempo via Helm chart into the `qa-monitoring` namespace.
 - `tempo-status` – Reports on the readiness of Tempo pods and their associated services.
 - `tempo-ui` – Sets up a port-forward to the Tempo HTTP API for troubleshooting and direct trace retrieval.
 - `tempo-uninstall` – Removes Tempo resources from the cluster during clean-up operations.
 
-To validate the integration, I created a technical runbook that demonstrates the end-to-end trace flow. This process involves pushing synthetic OTLP spans through a `curl` command and verifying their presence in the `tempo-traces` MinIO bucket and the Grafana UI. The full verification steps—documented in ["Verify Tempo Traces"](https://github.com/igor-baiborodine/insurance-hub/blob/main/k8s/tests/infra/verify-tempo-traces/verify-tempo-traces.md)—ensure that our tracing pipeline is ready to ingest data from both legacy bridges and future Go services.
+To validate the integration, I created a technical runbook that demonstrates the complete trace flow. This process involves sending synthetic OTLP spans via a `curl` command and confirming their presence in the `tempo-traces` MinIO bucket and the Grafana UI. The full verification steps, documented in ["Verify Tempo Traces,"](https://github.com/igor-baiborodine/insurance-hub/blob/main/k8s/tests/infra/verify-tempo-traces/verify-tempo-traces.md) ensure that our tracing pipeline is ready to ingest data from both legacy systems and future Go services.
 
 #### Alloy
 
