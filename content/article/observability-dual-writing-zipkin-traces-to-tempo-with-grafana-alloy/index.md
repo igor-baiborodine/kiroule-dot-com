@@ -3,7 +3,7 @@ title: "Legacy to Modern: Bridging Trace Flows with Dual-Writing and Alloy"
 date: 2026-05-15T08:00:00-04:00
 
 categories: [ "Java", "Go" , "Write-up" ]
-tags: [ "Java-to-Go" ]
+tags: [ "Java-to-Go", "Kubernetes", "Observability", "OpenTelemetry", "Grafana Alloy", "Grafana Loki", "Grafana Tempo" ]
 toc: false
 series: [ "Insurance Hub: The Way to Go" ]
 
