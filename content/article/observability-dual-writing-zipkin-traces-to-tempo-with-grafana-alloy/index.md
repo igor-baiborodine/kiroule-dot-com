@@ -118,10 +118,15 @@ I refactored the infrastructure deployment targets to include explicit readiness
 
 Additionally, I simplified the physical topology of the QA environment. Initially, the cluster was designed with separate master and worker nodes; however, I later implemented an optional single-node architecture to streamline the development cycle. The primary reason for this change was to accelerate the testing of new cluster provisioning modifications by reducing the overhead of managing multiple LXD containers. By removing default taints from the master node to allow workload scheduling, I created a more efficient and responsive environment for our Phase 2 validation without sacrificing the integrity of the multi-namespace monitoring stack.
 
-### AI Usage
+### AI Usage: Transitioning to Spec-First Engineering
 
-* Change in AI usage: a drift from using it as a chat companion to a specification-first, agent-based development approach.
-* Provide an excerpt from previous articles. State that this change in AI usage is not finalized and is work in progress, as I’m trying to polish the procedure and find the best sequence by applying best practices and trying different things.
+As I mentioned in the opening of this series:
+
+> To boost my learning and productivity, I make strategic use of modern AI tools—with clear boundaries. My main goal is to master Go and its ecosystem, not to let AI write code for me or fall into the trap of “vibe-coding,” where agents produce all the output. Instead, I treat AI as an advanced research tool—a “Stack Overflow on steroids”—for questions, documentation, and best practices. I focus on writing the code myself.
+
+During Phase 2, my interaction with these tools underwent a significant drift. Initially, I used AI primarily as a "chat companion" for fragmented queries; however, after testing more structured workflows, I switched to a spec-first, agent-based approach. This method aligns AI prompts directly with GitHub tickets and explicit acceptance criteria, ensuring that the generated suggestions remain grounded in the project's specific requirements. By providing the LLM with the technical context of our current environment—such as existing Make targets and Kubernetes namespace conventions—I have been able to maintain a medium-long development cadence while keeping the technical direction strictly under my control.
+
+It is important to note that this agentic workflow is currently a work in progress. I am still refining the boundaries between my manual engineering and automated assistance to ensure the highest standards of code quality and architectural integrity. I will provide more detailed insights and a final analysis of this methodology in upcoming articles once the patterns for our Go service migration have been fully finalized.
 
 ### Conclusion
 
