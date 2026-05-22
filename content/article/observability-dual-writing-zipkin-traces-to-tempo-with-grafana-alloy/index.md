@@ -11,17 +11,23 @@ author: "Igor Baiborodine"
 ---
 
 After [Phase 1](https://github.com/igor-baiborodine/insurance-hub/blob/main/docs/system-overview-and-migration-analysis.md#phase-1-foundational-infrastructure--environment-migration-lift-and-shift),
-the Insurance Hub had a stable Kubernetes runtime and a GitOps delivery loop in the QA K3s environment. Deployments were now repeatable and the cluster could be reconciled from Git, but cross-service troubleshooting was still constrained by the legacy tracing setup.
+the Insurance Hub had a stable Kubernetes runtime and a GitOps delivery loop in the QA K3s environment.
+Deployments were now repeatable and the cluster could be reconciled from Git, but cross-service
+troubleshooting was still constrained by the legacy tracing setup.
 
 <!--more-->
 
-Zipkin was operational, but it remained a single, isolated backend. [Phase 4](https://github.com/igor-baiborodine/insurance-hub/blob/main/docs/system-overview-and-migration-analysis.md#phase-4-phased-service-migration-to-go-strangler-fig-pattern)
-is expected to run in a mixed state, with some services still in Java while others move to Go, and requests will routinely cross that boundary. During this hybrid period, traces must land in one place; otherwise, investigations degrade into stitching together partial views across tools.
+Zipkin was operational, but it remained an isolated backend tied to legacy storage paths. This
+limitation becomes critical as we approach [Phase 4](https://github.com/igor-baiborodine/insurance-hub/blob/main/docs/system-overview-and-migration-analysis.md#phase-4-phased-service-migration-to-go-strangler-fig-pattern),
+where requests will routinely cross the boundary between Java and Go services. During this hybrid
+period, traces must land in one place; otherwise, investigations degrade into stitching together
+partial views across incompatible tools.
 
 [Phase 2](https://github.com/igor-baiborodine/insurance-hub/blob/main/docs/system-overview-and-migration-analysis.md#phase-2-foundational-observability)
-directly addresses this constraint. The goal is to establish Grafana Tempo as the primary tracing backend early on, all while ensuring that there are no changes to the existing Java services. To achieve this, I introduced Grafana Alloy as a permanent telemetry gateway across the cluster. Alloy receives Zipkin-format traces from the legacy services and exports them to both Zipkin and Tempo during this transition. Zipkin serves as a baseline and safety net, while Tempo will be the singular repository capable of spanning both Java and Go services as the migration unfolds.
-
-In this phase, Grafana Loki is also deployed, but we intentionally refrain from enabling log ingestion. Loki is viewed as part of the target stack and a prerequisite for Phase 4, rather than a complete logging rollout. The focus here is clear and intentional: set up Tempo, place Alloy in front of it, validate end-to-end dual-writing, and strengthen the QA K3s provisioning steps to ensure that the entire observability installation is repeatable.
+directly addresses this constraint by establishing Grafana Tempo as the primary tracing backend
+early on, without modifying existing Java services. I introduced Grafana Alloy as a telemetry
+gateway to dual-write traces to both Zipkin and Tempo, while also deploying Loki and validating the
+logging path via direct HTTP push to ensure the stack is ready for future service rewrites.
 
 {{< toc >}}
 
