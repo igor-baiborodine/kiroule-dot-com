@@ -125,15 +125,9 @@ Additionally, I simplified the physical topology of the QA environment by introd
 
 ### AI Usage: Transitioning to Spec-First Engineering
 
-As I mentioned in the 
-[opening](/article/from-java-to-go-kicking-off-the-insurance-hub-transformation/#ai-integration-accelerating-technical-research) 
-of this series:
+A quick aside on process: my use of AI tools has evolved as the technical complexity increased. In the [opening](/article/from-java-to-go-kicking-off-the-insurance-hub-transformation/#ai-integration-accelerating-technical-research) of this series, I committed to using these tools as high-speed technical references rather than generic code generators. During Phase 2, this approach matured into a specification-first, agent-based methodology.
 
-> To boost my learning and productivity, I make strategic use of modern AI tools—with clear boundaries. My main goal is to master Go and its ecosystem, not to let AI write code for me or fall into the trap of “vibe-coding,” where agents produce all the output. Instead, I treat AI as an advanced research tool—a “Stack Overflow on steroids”—for questions, documentation, and best practices. I focus on writing the code myself.
-
-During Phase 2, my interaction with these tools changed significantly. Initially, I used AI primarily as a "chat companion" for fragmented queries. However, after experimenting with more structured workflows, I shifted to a specification-first, agent-based approach. This method aligns AI prompts directly with GitHub tickets and explicit acceptance criteria, ensuring that the generated suggestions are grounded in the specific requirements of the project. By providing the LLM with the technical context of our current environment—such as existing Make targets and Kubernetes namespace conventions—I have been able to maintain a consistent development pace while keeping the technical direction firmly under my control.
-
-It is important to note that this agentic workflow is still a work in progress. I am refining the boundaries between my manual engineering efforts and automated assistance to ensure the highest standards of code quality and architectural integrity. I will provide more detailed insights and a final analysis of this methodology in upcoming articles, once the patterns for our Go service migration have been fully finalized.
+Initially, I used AI primarily for fragmented, chat-based queries. However, after experimenting with more structured workflows, I began aligning prompts directly with GitHub tickets and explicit acceptance criteria. By providing the model with the technical context of the current environment—such as existing Make targets and Kubernetes namespace conventions—I have been able to maintain a consistent development pace while keeping the architectural direction firmly under my control. This agentic workflow is still a work in progress, and I will provide a final analysis once the Go migration patterns are fully finalized.
 
 ### Phase 2 Completion: Securing Observability Safety Layer
 
