@@ -40,10 +40,10 @@ in GitHub Projects, divided into four targeted tickets. Success for this phase m
 
 | Ticket                                                                                        | Deliverable                            | Description                                                                                                                    |
 |:----------------------------------------------------------------------------------------------|:---------------------------------------|:-------------------------------------------------------------------------------------------------------------------------------|
-| **[issue #80](https://github.com/igor-baiborodine/insurance-hub/issues/80#issue-4376712516)** | **Grafana Loki Installation**          | Deploy Loki in the QA cluster with MinIO-backed storage to serve as the future target for centralized log aggregation.         |
-| **[issue #81](https://github.com/igor-baiborodine/insurance-hub/issues/81#issue-4376717776)** | **Grafana Tempo Installation**         | Set up Tempo as the primary tracing store, providing a scalable, S3-compatible alternative to the legacy Zipkin backend.       |
-| **[issue #82](https://github.com/igor-baiborodine/insurance-hub/issues/82#issue-4379324528)** | **Grafana Alloy Deployment**           | Implement Alloy as a permanent telemetry gateway to ingest legacy traces and route them into the modern stack.                 |
-| **[issue #86](https://github.com/igor-baiborodine/insurance-hub/issues/86#issue-4425327776)** | **QA Cluster Provisioning Refinement** | Update Make targets and infrastructure automation to handle the increased resource footprints of the observability components. |
+| **[#80](https://github.com/igor-baiborodine/insurance-hub/issues/80#issue-4376712516)** | **Grafana Loki Installation**          | Deploy Loki in the QA cluster with MinIO-backed storage to serve as the future target for centralized log aggregation.         |
+| **[#81](https://github.com/igor-baiborodine/insurance-hub/issues/81#issue-4376717776)** | **Grafana Tempo Installation**         | Set up Tempo as the primary tracing store, providing a scalable, S3-compatible alternative to the legacy Zipkin backend.       |
+| **[#82](https://github.com/igor-baiborodine/insurance-hub/issues/82#issue-4379324528)** | **Grafana Alloy Deployment**           | Implement Alloy as a permanent telemetry gateway to ingest legacy traces and route them into the modern stack.                 |
+| **[#86](https://github.com/igor-baiborodine/insurance-hub/issues/86#issue-4425327776)** | **QA Cluster Provisioning Refinement** | Update Make targets and infrastructure automation to handle the increased resource footprints of the observability components. |
 
 In this phase, the focus was primarily on infrastructure. I regarded the installation of Loki and Tempo as essential for the long-term health of the platform, ensuring that our storage strategy remained aligned with the MinIO-based approach established in Phase 1. The introduction of Grafana Alloy allowed me to validate the end-to-end trace flow from existing Java services into Tempo, effectively strengthening the observability pipeline even before any Go code was written. This proactive setup minimizes operational risks in Phase 4, as the monitoring environment is already mature and ready to receive OTLP signals.
 
@@ -81,7 +81,7 @@ With the dual-write strategy defined, the remaining Phase 2 work involved standi
 
 The legacy Java services do not have any centralized logging capabilities, resulting in fragmented console output that requires manual, ad-hoc aggregation. As we transition these services to Go, I have prioritized establishing a robust logging foundation. Given our Grafana-centered stack, [Loki](https://grafana.com/oss/loki/) was the logical choice for log aggregation. It follows the same label-based indexing philosophy as Prometheus, avoiding the high resource overhead associated with full-text indexing while providing the query performance necessary for rapid incident response.
 
-The deployment utilizes a dedicated MinIO tenant for Loki, provisioned through our established operator patterns to ensure that log storage is both isolated and scalable. I integrated Loki into the QA cluster using a streamlined set of [Makefile targets](https://github.com/igor-baiborodine/insurance-hub/blob/9c359a474ec83ce202d08d8d8ae8a0944491b42a/k8s/Makefile#L357) to manage its lifecycle:
+The deployment utilizes a dedicated MinIO tenant for Loki, provisioned through our established operator patterns to ensure that log storage is both isolated and scalable. I integrated Loki into the QA cluster using a streamlined set of [Make targets](https://github.com/igor-baiborodine/insurance-hub/blob/9c359a474ec83ce202d08d8d8ae8a0944491b42a/k8s/Makefile#L357) to manage its lifecycle:
 - `loki-install` – Deploy Grafana Loki via Helm chart into the `qa-monitoring` namespace.
 - `loki-status` – Check status of Loki pods and services.
 - `loki-ui` – Port-forward UI/API for direct querying and troubleshooting.
@@ -93,7 +93,7 @@ To ensure the persistence layer is reliable, I wrote ["Verify Loki Logs"](https:
 
 The legacy Java environment uses Zipkin for distributed tracing, storing spans in Elasticsearch. While this setup provides basic visibility, it operates as a silo, making it challenging to correlate with our emerging metrics and logs. To unify our observability data, we have integrated [Tempo](https://grafana.com/oss/tempo/) as our new high-scale trace storage backend. Tempo is designed to store large volumes of trace data cost-effectively by utilizing object storage, which aligns perfectly with our transition to S3-compatible persistence.
 
-Similar to our logging system, Tempo is deployed with a dedicated MinIO tenant to ensure storage isolation and independent scaling. I have added several [Makefile targets][Makefile targets](https://github.com/igor-baiborodine/insurance-hub/blob/9c359a474ec83ce202d08d8d8ae8a0944491b42a/k8s/Makefile#L398) to the QA cluster configuration to automate the deployment:
+Similar to our logging system, Tempo is deployed with a dedicated MinIO tenant to ensure storage isolation and independent scaling. I have added several [Make targets](https://github.com/igor-baiborodine/insurance-hub/blob/9c359a474ec83ce202d08d8d8ae8a0944491b42a/k8s/Makefile#L398) to the QA cluster configuration to automate the deployment:
 - `tempo-install` – Deploy Grafana Tempo via Helm chart into the `qa-monitoring` namespace.
 - `tempo-status` – Check status of Tempo pods and associated services.
 - `tempo-ui` – Port-forward UI/API for troubleshooting and direct trace retrieval.
@@ -105,7 +105,7 @@ To validate the integration, I created a technical runbook that demonstrates the
 
 With Loki and Tempo serving as our storage backends, the final requirement for Phase 2 was a unified telemetry collector. [Alloy](https://grafana.com/oss/alloy/) acts as the critical bridge between our legacy Java services and the modern observability stack, handling the ingestion, processing, and routing of all telemetry signals from a single agent.
 
-I deployed Alloy as a central service in the `qa-monitoring` namespace, configured with specific receivers for Zipkin spans and OTLP data. This consolidation removes the need to handle multiple disparate collectors, simplifying our infrastructure footprint. I also introduced standard [Makefile targets](https://github.com/igor-baiborodine/insurance-hub/blob/9c359a474ec83ce202d08d8d8ae8a0944491b42a/k8s/Makefile#L439) to manage Alloy's lifecycle:
+I deployed Alloy as a central service in the `qa-monitoring` namespace, configured with specific receivers for Zipkin spans and OTLP data. This consolidation removes the need to handle multiple disparate collectors, simplifying our infrastructure footprint. I also introduced standard [Make targets](https://github.com/igor-baiborodine/insurance-hub/blob/9c359a474ec83ce202d08d8d8ae8a0944491b42a/k8s/Makefile#L439) to manage Alloy's lifecycle:
 - `alloy-install` – Deploy Grafana Alloy via Helm chart with our custom pipelines.
 - `alloy-status` – Check status of the Alloy pods and ingestion services.
 - `alloy-ui` – Port-forward UI for real-time pipeline debugging and component inspection.
@@ -129,7 +129,7 @@ A quick aside on process: my use of AI tools has evolved as the technical comple
 
 Initially, I used AI primarily for fragmented, chat-based queries. However, after experimenting with more structured workflows, I began aligning prompts directly with GitHub tickets and explicit acceptance criteria. By providing the model with the technical context of the current environment—such as existing Make targets and Kubernetes namespace conventions—I have been able to maintain a consistent development pace while keeping the architectural direction firmly under my control. This agentic workflow is still a work in progress, and I will provide a final analysis once the Go migration patterns are fully finalized.
 
-### Phase 2 Completion: A Trace Cutover Safety Net
+### Phase 2 Completion: Trace Cutover Safety Net
 
 Phase 2 concludes with a significantly improved observability foundation, transforming the distributed system into a transparent and queryable environment. Operationally, we have achieved stable dual-writing to both Zipkin and Tempo via Grafana Alloy, established a scalable trace store, and secured a deterministic QA bootstrap process. While cluster-wide log ingestion is intentionally deferred, the storage path for Loki is validated and ready for future service rewrites.
 
