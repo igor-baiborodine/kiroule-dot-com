@@ -75,43 +75,43 @@ This transition effectively decouples our telemetry "producers" from the "consum
 
 ### Grafana-centered Observability: Implementing Logging and Tracing
 
-Completing the observability pillars for the QA K3s cluster is a critical objective for Phase 2. While the initial setup provided basic metrics through the Kube Prometheus Stack, we lacked a unified method for log aggregation and advanced trace analysis. This absence of integration made cross-service correlation challenging during troubleshooting.
+With the dual-write strategy defined, the remaining Phase 2 work involved standing up the storage backends (Tempo first, Loki staged) and then deploying Grafana Alloy to tie the pipeline together. Making this installation repeatable across the QA K3s environment was a primary focus.
 
 #### Loki
 
-The legacy Java services do not have any centralized logging capabilities, resulting in fragmented console output that requires manual, ad-hoc aggregation. As we transition these services to Go in the future, I have prioritized establishing a robust logging foundation. Given our Grafana-centered stack, [Loki](https://grafana.com/oss/loki/) was the logical choice for log aggregation. It follows the same label-based indexing philosophy as Prometheus, avoiding the high resource overhead associated with full-text indexing while providing the query performance necessary for rapid incident response.
+The legacy Java services do not have any centralized logging capabilities, resulting in fragmented console output that requires manual, ad-hoc aggregation. As we transition these services to Go, I have prioritized establishing a robust logging foundation. Given our Grafana-centered stack, [Loki](https://grafana.com/oss/loki/) was the logical choice for log aggregation. It follows the same label-based indexing philosophy as Prometheus, avoiding the high resource overhead associated with full-text indexing while providing the query performance necessary for rapid incident response.
 
-The deployment utilizes a dedicated MinIO tenant for Loki, provisioned through our established operator patterns to ensure that log storage is both isolated and scalable. I integrated Loki into the QA cluster using a streamlined set of [Makefile targets](https://github.com/igor-baiborodine/insurance-hub/blob/9c359a474ec83ce202d08d8d8ae8a0944491b42a/k8s/Makefile#L357) to manage its lifecycle and access.
-- `loki-install` – Deploys Grafana Loki via Helm chart into the `qa-monitoring` namespace.
-- `loki-status` – Validates the health of Loki pods and services.
-- `loki-ui` – Establishes a port-forward to the Loki HTTP API for direct querying.
-- `loki-uninstall` – Removes the Loki deployment from the cluster.
+The deployment utilizes a dedicated MinIO tenant for Loki, provisioned through our established operator patterns to ensure that log storage is both isolated and scalable. I integrated Loki into the QA cluster using a streamlined set of [Makefile targets](https://github.com/igor-baiborodine/insurance-hub/blob/9c359a474ec83ce202d08d8d8ae8a0944491b42a/k8s/Makefile#L357) to manage its lifecycle:
+- `loki-install` – Deploy Grafana Loki via Helm chart into the `qa-monitoring` namespace.
+- `loki-status` – Check status of Loki pods and services.
+- `loki-ui` – Port-forward UI/API for direct querying and troubleshooting.
+- `loki-uninstall` – Uninstall the Loki deployment from the cluster.
 
-To ensure the persistence layer is reliable, I wrote a dedicated runbook to validate that logs are correctly pushed via the HTTP API and stored as objects in the `loki-logs` MinIO bucket. This verification process—including the specific `curl` commands and expected JSON responses—is detailed in ["Verify Loki Logs"](https://github.com/igor-baiborodine/insurance-hub/blob/main/k8s/tests/infra/verify-loki-logs/verify-loki-logs.md) guide providing a repeatable method to confirm that our logging infrastructure is both accessible and production-ready.
+To ensure the persistence layer is reliable, I wrote ["Verify Loki Logs"](https://github.com/igor-baiborodine/insurance-hub/blob/main/k8s/tests/infra/verify-loki-logs/verify-loki-logs.md) runbook to validate that logs can be pushed and stored as objects in the `loki-logs` MinIO bucket. While I validated the storage path and basic queryability via direct OTLP/HTTP push, I have deferred cluster-wide collection pipelines and dashboard tuning until Phase 4. This verification confirms that our logging infrastructure is operationally usable and ready for future workload integration.
 
 #### Tempo
 
 The legacy Java environment uses Zipkin for distributed tracing, storing spans in Elasticsearch. While this setup provides basic visibility, it operates as a silo, making it challenging to correlate with our emerging metrics and logs. To unify our observability data, we have integrated [Tempo](https://grafana.com/oss/tempo/) as our new high-scale trace storage backend. Tempo is designed to store large volumes of trace data cost-effectively by utilizing object storage, which aligns perfectly with our transition to S3-compatible persistence.
 
-Similar to our logging system, Tempo is deployed with a dedicated MinIO tenant to ensure storage isolation and independent scaling. I have added several [Makefile targets](https://github.com/igor-baiborodine/insurance-hub/blob/9c359a474ec83ce202d08d8d8ae8a0944491b42a/k8s/Makefile#L398) to the QA cluster configuration to automate the deployment and operational checks of the tracing backend.
-- `tempo-install` – Deploys Grafana Tempo via Helm chart into the `qa-monitoring` namespace.
-- `tempo-status` – Reports on the readiness of Tempo pods and their associated services.
-- `tempo-ui` – Sets up a port-forward to the Tempo HTTP API for troubleshooting and direct trace retrieval.
-- `tempo-uninstall` – Removes Tempo resources from the cluster during clean-up operations.
+Similar to our logging system, Tempo is deployed with a dedicated MinIO tenant to ensure storage isolation and independent scaling. I have added several [Makefile targets][Makefile targets](https://github.com/igor-baiborodine/insurance-hub/blob/9c359a474ec83ce202d08d8d8ae8a0944491b42a/k8s/Makefile#L398) to the QA cluster configuration to automate the deployment:
+- `tempo-install` – Deploy Grafana Tempo via Helm chart into the `qa-monitoring` namespace.
+- `tempo-status` – Check status of Tempo pods and associated services.
+- `tempo-ui` – Port-forward UI/API for troubleshooting and direct trace retrieval.
+- `tempo-uninstall` – Uninstall Tempo resources from the cluster.
 
-To validate the integration, I created a technical runbook that demonstrates the complete trace flow. This process involves sending synthetic OTLP spans via a `curl` command and confirming their presence in the `tempo-traces` MinIO bucket and the Grafana UI. The full verification steps, documented in ["Verify Tempo Traces,"](https://github.com/igor-baiborodine/insurance-hub/blob/main/k8s/tests/infra/verify-tempo-traces/verify-tempo-traces.md) ensure that our tracing pipeline is ready to ingest data from both legacy systems and future Go services.
+To validate the integration, I created a technical runbook that demonstrates the complete trace flow. This process involves sending synthetic spans via OTLP/HTTP—a method I chose for its minimal dependencies—and confirming their presence in the `tempo-traces` MinIO bucket and the Grafana UI. The full verification steps, documented in ["Verify Tempo Traces,"](https://github.com/igor-baiborodine/insurance-hub/blob/main/k8s/tests/infra/verify-tempo-traces/verify-tempo-traces.md) ensure that our tracing pipeline is ready to ingest data from both legacy systems and future Go services.
 
 #### Alloy
 
-With Loki and Tempo serving as our storage backends, the final requirement for Phase 2 was a unified telemetry collector. While a standalone OpenTelemetry Collector was initially considered, I opted for [Grafana Alloy](https://grafana.com/oss/alloy/) to serve as our primary cluster-wide pipeline. Alloy acts as the critical bridge between our legacy Java services and the modern observability stack, handling the ingestion, processing, and routing of all telemetry signals from a single, programmable agent.
+With Loki and Tempo serving as our storage backends, the final requirement for Phase 2 was a unified telemetry collector. [Alloy](https://grafana.com/oss/alloy/) acts as the critical bridge between our legacy Java services and the modern observability stack, handling the ingestion, processing, and routing of all telemetry signals from a single agent.
 
-Alloy is deployed as a central service in the `qa-monitoring` namespace. It is configured to receive Zipkin spans from our legacy services and OTLP data from our new Go services. This consolidation removes the need to handle multiple disparate collectors, simplifying our infrastructure footprint. I have also introduced several [Makefile targets](https://github.com/igor-baiborodine/insurance-hub/blob/9c359a474ec83ce202d08d8d8ae8a0944491b42a/k8s/Makefile#L439) to manage Alloy's lifecycle within the cluster.
-- `alloy-install` – Deploys Grafana Alloy via Helm chart with our custom pipelines.
-- `alloy-status` – Validates that the Alloy pods and ingestion services are healthy.
-- `alloy-ui` – Forwards the Alloy dashboard for real-time pipeline debugging and component inspection.
-- `alloy-uninstall` – Removes the Alloy agent from the monitoring namespace.
+I deployed Alloy as a central service in the `qa-monitoring` namespace, configured with specific receivers for Zipkin spans and OTLP data. This consolidation removes the need to handle multiple disparate collectors, simplifying our infrastructure footprint. I also introduced standard [Makefile targets](https://github.com/igor-baiborodine/insurance-hub/blob/9c359a474ec83ce202d08d8d8ae8a0944491b42a/k8s/Makefile#L439) to manage Alloy's lifecycle:
+- `alloy-install` – Deploy Grafana Alloy via Helm chart with our custom pipelines.
+- `alloy-status` – Check status of the Alloy pods and ingestion services.
+- `alloy-ui` – Port-forward UI for real-time pipeline debugging and component inspection.
+- `alloy-uninstall` – Uninstall the Alloy agent from the monitoring namespace.
 
-To verify the integrity of the pipeline, I developed a runbook that tests the end-to-end flow of traces through the collector. By sending spans to Alloy’s receivers and monitoring their successful propagation to Tempo, we ensure that our telemetry system is correctly configured. This setup, outlined in the ["Verify Alloy Traces"](https://github.com/igor-baiborodine/insurance-hub/blob/main/k8s/tests/infra/verify-alloy-traces/verify-alloy-traces.md) guide, gives us the confidence to proceed with the full service migration, knowing that our observability bridge is stable and production-ready. 
+To verify the integrity of the pipeline, I developed ["Verify Alloy Traces"](https://github.com/igor-baiborodine/insurance-hub/blob/main/k8s/tests/infra/verify-alloy-traces/verify-alloy-traces.md) runbook that tests the end-to-end flow of traces through the collector. By sending spans to Alloy’s receivers and monitoring their successful propagation to Tempo, we ensure that our telemetry system is correctly configured. This setup gives us the confidence to proceed with the full service migration, knowing that our observability bridge is stable and production-ready.
 
 ### QA Cluster: Stabilizing Infrastructure Bootstraps
 
