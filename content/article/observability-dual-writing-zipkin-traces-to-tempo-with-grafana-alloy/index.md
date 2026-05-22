@@ -67,9 +67,9 @@ During this phase, the architecture of our trace flow experienced a major transf
 
 I chose to implement a dual-write strategy in which Alloy forwards traces to both Zipkin and Tempo simultaneously. This approach was justified despite the added complexity for three main reasons:
 
-1.  **Zero Blast Radius**: Zipkin remains the primary safety net. If Tempo or the MinIO backing store struggles under load, the existing debugging workflow remains untouched.
-2. **Side-by-Side Validation**: We can compare the same traces in the legacy Zipkin UI and the new Grafana-first Tempo dashboards. This allows us to ensure that no data is being lost or distorted during the OTLP translation.
-3. **The Clean Flip**: This setup offers a straightforward path for decommissioning. Once we are confident in Tempo's retention and performance, we can simply remove the Zipkin exporter from the Alloy configuration. This change can be made without service restarts or code modifications.
+1. **Reduced Cutover Risk**: Zipkin remains the primary safety net. If Tempo or the MinIO backing store struggles under load, the existing debugging workflow remains untouched. This reduces the blast radius of the transition at the cost of temporary additional ingestion overhead.
+2. **Span Validation**: We can compare the same traces in the legacy Zipkin UI and the new Grafana-first Tempo dashboards. This allows us to ensure that span counts, service names, and critical attributes survive the Zipkin-to-Tempo ingestion path.
+3. **Clean Flip**: This setup offers a straightforward path for decommissioning. Once we are confident in Tempo's retention and performance, we can simply remove the Zipkin exporter from the Alloy configuration. This change can be made without service restarts or code modifications.
 
 This transition effectively decouples our telemetry "producers" from the "consumers," transforming observability from a hard-coded dependency into a manageable infrastructure service.
 
