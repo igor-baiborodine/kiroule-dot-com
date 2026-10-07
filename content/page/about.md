@@ -10,7 +10,7 @@ link: ""
 target: "_blank"
 ---
 
-![Igor Baiborodine](/img/content/page/about/author.jpg) 
+![Igor Baiborodine](/img/content/page/about/author.png) 
 
 ### Igor Baiborodine
 
