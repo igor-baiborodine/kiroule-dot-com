@@ -1,7 +1,8 @@
 ---
 title: "Lift Completed, Now Shift: Making the Insurance Hub Kubernetes-Native (Enough)"
 date: 2026-02-05T08:00:00-04:00
-
+lastmod: 2026-10-06T08:00:00-04:00
+  
 categories: [ "Java", "Go" , "Write-up" ]
 tags: [ "Java-to-Go", "Kubernetes", "MinIO", "S3", "PostgreSQL", "Kustomize", "Service Discovery", "Kind", "K3s" ]
 toc: false
@@ -92,6 +93,7 @@ exposed to allow IDE-based services to reach their respective data stores.
 | `svc/local-dev-postgres-payment-rw`  | 5432 → localhost:5462 |
 | `svc/local-dev-postgres-policy-rw`   | 5432 → localhost:5472 |
 | `svc/local-dev-postgres-pricing-rw`  | 5432 → localhost:5482 |
+| `svc/local-dev-postgres-product-rw`  | 5432 → localhost:5492 |
 
 Finally, since two MinIO tenants were used (document and payment), local development MinIO endpoints
 were also assigned non-overlapping ports so that each service could be tested against its tenant
